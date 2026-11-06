@@ -848,6 +848,11 @@ button:active:not(:disabled), .btn:active, [role="tab"]:active { transform: scal
 .chip.stage, .ext-link, .linklike { color: var(--ac-tx); }
 .chip.stage { border-color: var(--ac-tx); }
 
+/* Links at the bottom of every screen: terms, accessibility statement, contact */
+.site-foot { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: center; margin: 28px 0 8px; }
+.site-foot .linklike { min-height: 44px; padding-inline: 4px; color: var(--mut); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 760px) { .wrap > .site-foot { margin-bottom: 84px; } } /* stays above the bottom tab bar */
+
 /* Short "why we ask" note under a form field (privacy: notice at the point of collection) */
 .field-why { display: flex; gap: 6px; align-items: center; margin: 6px 0 0; font-size: 13px; }
 
@@ -1056,7 +1061,8 @@ const isBrowsingGuest = () => !S.user && S.isGuest && (S.browsing || !!S.focusId
 
 // Typed-text protection for form dialogs: remember how the form looked when it opened,
 // and ask before closing if something changed.
-const FORM_MODALS = ['proj', 'apply', 'report'];
+const FORM_MODALS = ['proj', 'apply', 'report', 'contact'];
+const CONTACT_TOPICS = { privacy: 'פרטיות והמידע שלי', accessibility: 'נגישות', other: 'משהו אחר' };
 const formSnap = f => JSON.stringify([...f.elements].filter(c => c.name).map(c => c.type === 'checkbox' ? c.checked : c.value))
   + [...f.querySelectorAll('.role-pill.active')].map(b => b.dataset.id).join(',');
 const formDirty = () => {
@@ -1380,7 +1386,7 @@ let S = {
   report: null, // { userId, projectId }
   blocked: new Set(),
   isAdmin: false,
-  admin: { stats: null, reports: [], showHandled: false },
+  admin: { stats: null, reports: [], contacts: [], showHandled: false },
   profiles: {},
   phones: {},
   counts: {},
@@ -1556,13 +1562,15 @@ async function loadAll() {
 // Admin-only data (the database refuses these calls for everyone else)
 async function adminLoad() {
   if (!S.isAdmin) return;
-  const [stats, reports] = await Promise.all([
+  const [stats, reports, contacts] = await Promise.all([
     sb.rpc('admin_stats'),
-    sb.from('reports').select('*').order('created_at', { ascending: false })
+    sb.from('reports').select('*').order('created_at', { ascending: false }),
+    sb.from('contact_requests').select('*').order('created_at', { ascending: false })
   ]);
-  if (stats.error || reports.error) { toast('לא הצלחנו לטעון את נתוני הניהול'); return; }
+  if (stats.error || reports.error || contacts.error) { toast('לא הצלחנו לטעון את נתוני הניהול'); return; }
   S.admin.stats = stats.data;
   S.admin.reports = reports.data;
+  S.admin.contacts = contacts.data;
 }
 
 // Re-draw after a change from someone else, without wiping what the user is typing
@@ -1751,7 +1759,7 @@ function welcome() {
       <div data-rise style="--i:7">${googleBtn('כבר רשום/ה? כניסה עם גוגל', 'btn ghost')}</div>
       <div data-rise style="--i:8"><button type="button" class="btn ghost" data-a="browse">${ic('layout-grid')} רוצים להציץ בלוח לפני שמצטרפים?</button></div>
     </div>
-    <p class="note" style="margin:0"><button type="button" class="linklike" data-a="terms">תנאי שימוש ופרטיות</button></p>
+    ${footLinks()}
     ${tickerHtml()}
   </div>
   <section class="wrap how" aria-labelledby="how-title">
@@ -1785,9 +1793,45 @@ function welcome() {
 
 // Where the Supabase project physically lives (eu-central-1 = Frankfurt). Change if the project moves.
 const DATA_LOCATION = 'גרמניה (פרנקפורט), באיחוד האירופי';
-// Public contact address for privacy and accessibility requests. Empty = the line is hidden.
-// Never Guy's personal address (the site and repo are public).
-const CONTACT_EMAIL = '';
+// Requests reach the admin through the in-site contact form (table contact_requests), never a public email.
+
+// Small row of links at the bottom of every screen
+const footLinks = () => `<p class="note site-foot">
+  <button type="button" class="linklike" data-a="terms">תנאי שימוש ופרטיות</button>
+  <span aria-hidden="true">·</span>
+  <button type="button" class="linklike" data-a="access">הצהרת נגישות</button>
+  <span aria-hidden="true">·</span>
+  <button type="button" class="linklike" data-a="contact" data-id="other">יצירת קשר</button>
+</p>`;
+
+function accessHtml() {
+  return `<div class="terms">
+    <h3 id="dlg-title">הצהרת נגישות</h3>
+    <p class="note" style="margin-top:0">עודכן: 7.11.2026</p>
+    <p>אנחנו רוצים שכל אחד ואחת יוכלו להשתמש ב״קול במה״. האתר נבנה לפי התקן הישראלי 5568, שמבוסס על הנחיות WCAG 2.0 ברמה AA, ואנחנו ממשיכים לשפר אותו.</p>
+
+    <h4>מה כבר יש באתר</h4>
+    <ul>
+      <li>ניווט מלא במקלדת, וקישור ״דלגו לתוכן הראשי״ בלחיצה הראשונה על Tab.</li>
+      <li>שפה וכיוון קריאה מוגדרים (עברית, מימין לשמאל).</li>
+      <li>ניגודיות צבעים שנבדקה במצב בהיר ובמצב כהה.</li>
+      <li>כפתורים בגודל נוח ללחיצה בטלפון, ותצוגה שמתאימה לכל גודל מסך ולהגדלת טקסט.</li>
+      <li>מי שמגדיר/ה במכשיר ״הפחתת תנועה״ – האנימציות באתר נכבות.</li>
+      <li>לכפתורים שיש בהם רק סמל יש שם שקורא מסך מקריא.</li>
+    </ul>
+
+    <h4>מגבלות ידועות</h4>
+    <ul>
+      <li>האתר עוד לא נבדק בידי מורשה נגישות, ועוד לא נבדק עם קורא מסך.</li>
+      <li>בחלק מהטפסים התוויות עוד לא מקושרות לשדות.</li>
+      <li>תוכן שמשתמשים מעלים (כמו תיאורי פרויקטים) הוא באחריותם.</li>
+    </ul>
+
+    <h4>נתקלת בבעיה?</h4>
+    <p>אפשר לדווח על בעיית נגישות או לבקש התאמה דרך טופס יצירת קשר. עונים תוך 30 יום לכל היותר, ומתקנים כמה שיותר מהר.</p>
+    <div class="row"><button type="button" class="btn sm" data-a="contact" data-id="accessibility">${ic('message-circle')} דיווח על בעיית נגישות</button></div>
+  </div>`;
+}
 
 function termsHtml() {
   return `<div class="terms">
@@ -1840,7 +1884,7 @@ function termsHtml() {
     <ul>
       <li><b>לראות ולתקן</b> – כל הפרטים שלך מופיעים בלשונית ״הפרופיל שלי״, ואפשר לערוך אותם שם.</li>
       <li><b>למחוק</b> – כפתור ״מחיקת חשבון״ באותה לשונית מוחק את כל המידע שלך מהאתר, מיד.</li>
-      ${CONTACT_EMAIL ? `<li><b>שאלות ובקשות</b> – <a href="mailto:${esc(CONTACT_EMAIL)}" dir="ltr">${esc(CONTACT_EMAIL)}</a>. עונים תוך 30 יום לכל היותר.</li>` : ''}
+      <li><b>שאלות ובקשות</b> – דרך <button type="button" class="linklike" data-a="contact" data-id="privacy">טופס יצירת קשר</button>. הפנייה מגיעה רק למנהל האתר, ועונים תוך 30 יום לכל היותר.</li>
     </ul>
 
     <h4>דיווח וחסימה</h4>
@@ -1962,7 +2006,7 @@ function mainView() {
         <span class="lbl-long">הפרופיל שלי</span><span class="lbl-short">פרופיל</span>
       </button>`}
       ${!guest && S.isAdmin ? `<button role="tab" aria-selected="${S.tab === 'admin'}" data-a="tab" data-id="admin">
-        <span class="ti">${ic('shield-check')}${S.admin.stats && S.admin.stats.open_reports ? `<span class="badge">${S.admin.stats.open_reports}</span>` : ''}</span>
+        <span class="ti">${ic('shield-check')}${S.admin.stats && (S.admin.stats.open_reports + (S.admin.stats.open_contacts || 0)) ? `<span class="badge">${S.admin.stats.open_reports + (S.admin.stats.open_contacts || 0)}</span>` : ''}</span>
         <span class="lbl-long">ניהול</span><span class="lbl-short">ניהול</span>
       </button>` : ''}
     </div>
@@ -2023,6 +2067,7 @@ function mainView() {
     </div>` : ''}
 
     <div class="list" id="list">${renderTabContent()}</div>
+    ${footLinks()}
   </div>`;
 }
 
@@ -2230,6 +2275,7 @@ function renderTabContent() {
     const st = S.admin.stats || {};
     const stat = (n, label) => `<div class="stat"><b>${esc(n == null ? '–' : n)}</b><span>${esc(label)}</span></div>`;
     const reports = S.admin.reports.filter(r => S.admin.showHandled || !r.handled);
+    const contacts = S.admin.contacts.filter(c => S.admin.showHandled || !c.handled);
     const users = Object.values(S.profiles).sort((a, b) => b.created_at.localeCompare(a.created_at));
     const projTitle = id => (S.projects.find(p => p.id === id) || {}).title;
     const day = iso => new Date(iso).toLocaleDateString('he-IL');
@@ -2247,6 +2293,23 @@ function renderTabContent() {
         ${stat(st.visitors, 'כניסות לאתר (כולל בלי הרשמה)')}
       </div>
       <p class="note" style="margin:0">את תוכן ההודעות ומספרי הטלפון גם המנהל לא רואה, כמו שכתוב בתנאי השימוש.</p>
+
+      <h3 class="section-title">${ic('message-circle')} פניות מטופס יצירת קשר ${st.open_contacts ? `<span class="badge">${st.open_contacts}</span>` : ''}</h3>
+      <p class="note" style="margin:0">בקשות בנושא פרטיות ונגישות צריך לענות תוך 30 יום.</p>
+      ${contacts.length ? contacts.map(c => `<article class="card"${c.handled ? ' style="opacity:.6"' : ''}><div class="bd">
+        <div class="row" style="justify-content:space-between">
+          <span class="role-tag">${esc(CONTACT_TOPICS[c.topic] || c.topic)}</span>
+          <span class="note" style="margin:0">${esc(timeLabel(c.created_at))}</span>
+        </div>
+        <div class="meta">
+          <span>מאת: <b>${esc(c.sender_id && S.profiles[c.sender_id] ? nameOf(c.sender_id) : 'אורח/ת בלי פרופיל')}</b></span>
+          ${c.reply_to ? `<span>לחזור אל: <b dir="auto">${esc(c.reply_to)}</b></span>` : ''}
+        </div>
+        <div style="white-space:pre-wrap">${esc(c.message)}</div>
+        <div class="row">
+          <button class="btn ${c.handled ? 'ghost' : 'ok'} sm" data-a="contact-handled" data-id="${esc(c.id)}">${c.handled ? ic('rotate-ccw') + ' סמן כלא טופל' : ic('check') + ' סמן כטופל'}</button>
+        </div>
+      </div></article>`).join('') : '<p class="note">אין פניות פתוחות.</p>'}
 
       <div class="row" style="justify-content:space-between">
         <h3 class="section-title">${ic('flag')} דיווחים ${st.open_reports ? `<span class="badge">${st.open_reports}</span>` : ''}</h3>
@@ -2491,6 +2554,24 @@ function modalView() {
       <p class="note">${ic('lock')} הפרופיל והטלפון שלך לא נחשפים בלי הסכמה, כמו שכתוב בתנאי השימוש.</p>`;
   } else if (m === 'terms') {
     h = termsHtml() + `<div class="row" style="margin-top:16px"><button class="btn" data-a="close">הבנתי</button></div>`;
+  } else if (m === 'access') {
+    h = accessHtml() + `<div class="row" style="margin-top:16px"><button class="btn ghost" data-a="close">סגירה</button></div>`;
+  } else if (m === 'contact') {
+    h = `<h3 id="dlg-title">${ic('message-circle')} יצירת קשר</h3>
+      <p class="note">הפנייה מגיעה רק למנהל האתר. עונים תוך 30 יום לכל היותר.</p>
+      <form data-f="contact">
+        <label for="ct-topic">בנושא *</label>
+        <select id="ct-topic" name="topic" required>${opts(CONTACT_TOPICS, S.contactTopic || 'other')}</select>
+        <label for="ct-msg">מה רצית לכתוב? *</label>
+        <textarea id="ct-msg" name="message" rows="4" required maxlength="2000" placeholder="למשל: בקשה לקבל את המידע שלי, בעיה בכפתור מסוים, הצעה…"></textarea>
+        <label for="ct-reply">איך לחזור אליך? (רשות)</label>
+        <input id="ct-reply" name="reply_to" maxlength="200" autocomplete="email" placeholder="מייל או טלפון" aria-describedby="ct-reply-why">
+        <p class="note field-why" id="ct-reply-why">${ic('lock')} רק המנהל רואה את זה, ורק כדי לענות לך.${S.user ? ' אפשר גם להשאיר ריק ולקבל תשובה בהודעה באתר.' : ''}</p>
+        <div class="row" style="margin-top:16px">
+          <button class="btn">שליחה</button>
+          <button type="button" class="btn ghost" data-a="close">ביטול</button>
+        </div>
+      </form>`;
   } else if (m === 'confirm') {
     h = `<h3>רגע, בטוח?</h3>
       <p>${esc(S.confirm.text)}</p>
@@ -2673,6 +2754,13 @@ document.addEventListener('click', async e => {
     await db(sb.from('reports').update({ handled: !r.handled }).eq('id', r.id));
     await adminLoad();
     render();
+  } else if (a === 'contact-handled') {
+    const c = S.admin.contacts.find(x => x.id == id);
+    if (!c) return;
+    el.disabled = true;
+    await db(sb.from('contact_requests').update({ handled: !c.handled }).eq('id', c.id));
+    await adminLoad();
+    render();
   } else if (a === 'admin-close-proj') {
     el.disabled = true;
     const ok = await db(sb.from('projects').update({ status: 'filled' }).eq('id', id));
@@ -2717,6 +2805,13 @@ document.addEventListener('click', async e => {
   } else if (a === 'terms') {
     e.preventDefault();
     S.modal = 'terms';
+    renderModal();
+  } else if (a === 'access') {
+    S.modal = 'access';
+    renderModal();
+  } else if (a === 'contact') {
+    S.contactTopic = CONTACT_TOPICS[id] ? id : 'other';
+    S.modal = 'contact';
     renderModal();
   } else if (a === 'report') {
     const userId = el.dataset.other;
@@ -2927,6 +3022,22 @@ document.addEventListener('submit', async e => {
     closeModal();
     render();
     toast(d.block ? 'תודה. הדיווח התקבל והמשתמש נחסם.' : 'תודה, הדיווח התקבל.');
+  } else if (t === 'contact') {
+    const message = (d.message || '').trim();
+    if (!message) return;
+    setBusy(f, true);
+    const { error } = await sb.from('contact_requests').insert({
+      topic: CONTACT_TOPICS[d.topic] ? d.topic : 'other',
+      message,
+      reply_to: (d.reply_to || '').trim()
+    });
+    if (error) {
+      setBusy(f, false);
+      toast(/too many/.test(error.message) ? 'נשלחו הרבה פניות בשעה האחרונה. אפשר לנסות שוב מאוחר יותר.' : 'הפנייה לא נשלחה. אפשר לנסות שוב.');
+      return;
+    }
+    closeModal();
+    toast('תודה! הפנייה נשלחה.');
   } else if (t === 'chat') {
     const txt = (d.msg || '').trim();
     if (!txt) return;
