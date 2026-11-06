@@ -462,6 +462,170 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--mut); ma
   padding: 10px 14px;
 }
 .terms h4 { font-size: 17px; margin: 16px 0 4px; }
+
+/* ───────────── Design v2 (6.11.2026) ─────────────
+   Pass based on the ui-ux-pro-max checklist: SVG icons instead of emoji, 44px touch targets,
+   16px inputs (no iOS zoom), visible focus, bottom tab bar on phones, reduced-motion support. */
+:root { --ease: cubic-bezier(.2, .7, .2, 1); --beam: rgba(184, 121, 26, 0.16); }
+:root[data-theme="dark"] { --beam: rgba(232, 176, 74, 0.17); }
+body { font-size: 16px; }
+.ic {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.2em;
+}
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+input:focus, select:focus, textarea:focus { outline-width: 2px; }
+input, select, textarea { font-size: 16px; min-height: 44px; }
+textarea { min-height: 88px; }
+
+.btn {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  touch-action: manipulation;
+  transition: background .15s var(--ease), border-color .15s, color .15s, box-shadow .15s, transform .1s;
+}
+.btn:not(.ghost):not(.ok):not(.wa) { box-shadow: 0 8px 20px -10px var(--ac); }
+.btn.sm { min-height: 40px; padding: 8px 14px; border-radius: 10px; }
+@media (pointer: coarse) { .btn.sm { min-height: 44px; } }
+.btn.ghost { background: var(--card); }
+.linklike { min-height: 24px; }
+
+.chip, .role-tag { display: inline-flex; align-items: center; gap: 4px; }
+.meta span { display: inline-flex; align-items: center; gap: 5px; }
+.meta .ic { color: var(--gold); }
+
+/* Cards: a theatre ticket with a warm top edge */
+.card { transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
+.card .hd { background: linear-gradient(180deg, var(--gold-bg), transparent 85%); }
+.card h3 { font-size: 24px; }
+@media (hover: hover) {
+  .card:hover { border-color: color-mix(in srgb, var(--gold) 40%, var(--line)); }
+  .btn.ghost:hover { border-color: var(--gold); color: var(--tx); }
+}
+.card.closed { opacity: .65; }
+.list { gap: 18px; }
+
+.empty { padding: 40px 20px; }
+.empty-ic {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--gold-bg);
+  color: var(--gold);
+}
+.empty-ic .ic { width: 30px; height: 30px; }
+
+/* Welcome: a spotlight on an empty stage */
+.hero { position: relative; isolation: isolate; overflow: hidden; }
+.hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -18px;
+  left: 50%;
+  width: min(760px, 150vw);
+  height: 100%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--beam), transparent 78%);
+  clip-path: polygon(45% 0, 55% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+  animation: beam 5s ease-in-out infinite alternate;
+}
+@keyframes beam { from { opacity: .7; } to { opacity: 1; } }
+.hero h1 {
+  background: linear-gradient(180deg, var(--tx) 35%, var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 4px;
+}
+/* Movement only, never opacity: content stays readable even if the animation doesn't run */
+.hero > * { animation: rise .6s var(--ease); }
+.hero > *:nth-child(3) { animation-duration: .75s; }
+.hero > *:nth-child(4) { animation-duration: .9s; }
+@keyframes rise { from { transform: translateY(12px); } to { transform: none; } }
+.pick button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  transition: border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s;
+}
+.pick .txt { flex: 1; }
+.pick .txt span { display: block; font-size: 14px; opacity: .85; }
+.pick .pi {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--gold-bg);
+  color: var(--gold);
+}
+.pick .pi .ic { width: 24px; height: 24px; }
+.pick button.primary .pi { background: rgba(255, 255, 255, .18); color: #fff; }
+.pick .go { opacity: .6; }
+.pick .go .ic { transform: scaleX(-1); } /* RTL: "forward" points left */
+
+/* Tabs: text tabs on desktop, an app-style bottom bar on phones */
+.tabs button { min-height: 44px; position: relative; }
+.tabs .ti { position: relative; display: inline-flex; }
+.tabs .lbl-short { display: none; }
+.tabs .ti .badge { position: absolute; top: -6px; left: -10px; min-width: 18px; text-align: center; }
+@media (max-width: 760px) {
+  .tabs {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    margin: 0;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    gap: 2px;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card) 94%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: visible;
+  }
+  .tabs button {
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 56px;
+    padding: 6px 2px;
+    border: 0;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+  .tabs button .ic { width: 23px; height: 23px; }
+  .tabs button[aria-selected="true"] { color: var(--gold); background: var(--gold-bg); }
+  .tabs .lbl-long, .tabs .count { display: none; }
+  .tabs .lbl-short { display: inline; }
+  .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .toast { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Dialogs slide up gently */
+.dlg { animation: pop .22s var(--ease); border-radius: 18px; }
+@keyframes pop { from { transform: translateY(10px) scale(.98); } to { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 .terms p, .terms li { font-size: 14px; margin: 4px 0; }
 .terms ul { margin: 4px 0; padding-inline-start: 20px; }
 </style>
@@ -569,6 +733,54 @@ const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e) { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
 const opts = (o, sel) => (Array.isArray(o) ? o.map(v => [v, v]) : Object.entries(o)).map(([k, v]) => `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>${esc(v)}</option>`).join('');
+
+// Icons: Lucide (https://lucide.dev, ISC license), inlined so they inherit text color and size
+const ICONS = {
+  'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  'ban': '<circle cx="12" cy="12" r="10"/><path d="M4.929 4.929 19.07 19.071"/>',
+  'briefcase': '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  'calendar': '<path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/>',
+  'check': '<path d="M20 6 9 17l-5-5"/>',
+  'circle-check': '<circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/>',
+  'clapperboard': '<path d="m12.296 3.464 3.02 3.956"/><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m6.18 5.276 3.1 3.899"/>',
+  'clock': '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  'download': '<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
+  'drama': '<path d="M10 11h.01"/><path d="M14 6h.01"/><path d="M18 6h.01"/><path d="M6.5 13.1h.01"/><path d="M22 5c0 9-4 12-6 12s-6-3-6-12c0-2 2-3 6-3s6 1 6 3"/><path d="M17.4 9.9c-.8.8-2 .8-2.8 0"/><path d="M10.1 7.1C9 7.2 7.7 7.7 6 8.6c-3.5 2-4.7 3.9-3.7 5.6 4.5 7.8 9.5 8.4 11.2 7.4.9-.5 1.9-2.1 1.9-4.7"/><path d="M9.1 16.5c.3-1.1 1.4-1.7 2.4-1.4"/>',
+  'file-text': '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  'flag': '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/>',
+  'hourglass': '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  'inbox': '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  'key-round': '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+  'layout-grid': '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  'lightbulb': '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  'lock': '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'log-out': '<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
+  'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  'message-circle': '<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>',
+  'moon': '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
+  'pencil': '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  'phone': '<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>',
+  'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  'rotate-ccw': '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  'search': '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
+  'send': '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+  'share-2': '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>',
+  'shield-check': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  'sliders-horizontal': '<path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/>',
+  'smartphone': '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  'sparkles': '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
+  'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  'trash-2': '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  'triangle-alert': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  'user': '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  'user-round': '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  'users': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+  'wrench': '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/>',
+  'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'
+};
+// Decorative by default (aria-hidden); buttons that show only an icon carry their own aria-label
+const ic = name => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
 
 // Only http(s) links are allowed; "instagram.com/x" becomes "https://instagram.com/x"
 function safeUrl(u) {
@@ -686,17 +898,17 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 function installCard() {
   let body;
   if (isStandalone()) {
-    body = '<p class="note" style="margin:0">✓ את/ה כבר באפליקציה.</p>';
+    body = `<p class="note" style="margin:0">${ic('circle-check')} את/ה כבר באפליקציה.</p>`;
   } else if (installPrompt) {
     body = `<p class="note" style="margin:0 0 10px">מוסיפים את קול במה למסך הבית, ונפתח כמו אפליקציה.</p>
-      <button class="btn sm" data-a="install">📲 התקן את האפליקציה</button>`;
+      <button class="btn sm" data-a="install">${ic('download')} התקן את האפליקציה</button>`;
   } else if (isIOS()) {
     body = '<p class="note" style="margin:0">באייפון: פותחים את האתר ב־Safari, לוחצים על כפתור השיתוף (ריבוע עם חץ למעלה), ובוחרים <b>״הוספה למסך הבית״</b>.</p>';
   } else {
     body = '<p class="note" style="margin:0">בטלפון אנדרואיד: פותחים את האתר ב־Chrome, לוחצים על שלוש הנקודות למעלה, ובוחרים <b>״הוספה למסך הבית״</b> או <b>״התקנת אפליקציה״</b>.</p>';
   }
   return `<div class="card" style="padding:20px">
-    <h4 style="font-size:18px;margin-bottom:6px">📱 קול במה בטלפון</h4>
+    <h4 style="font-size:18px;margin-bottom:6px">${ic('smartphone')} קול במה בטלפון</h4>
     ${body}
   </div>`;
 }
@@ -989,7 +1201,7 @@ function welcome() {
   return `<div class="wrap hero">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <span class="hero-badge">תיאטרון · קולנוע · פרינג׳ · סטודיו</span>
-      <button class="btn ghost sm" data-a="theme">${S.theme === 'dark' ? '☀️ מצב בהיר' : '🌙 מצב כהה'}</button>
+      <button class="btn ghost sm" data-a="theme">${ic(S.theme === 'dark' ? 'sun' : 'moon')} ${S.theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}</button>
     </div>
     <div>
       <h1>קול במה</h1>
@@ -998,12 +1210,14 @@ function welcome() {
     </div>
     <div class="pick">
       <button class="primary" data-a="start-onboard" data-id="creator">
-        <b>🎭 אני מרים פרויקט</b>
-        <span>מחפש שחקנים ואנשי מקצוע להצגה או לסרט</span>
+        <span class="pi">${ic('drama')}</span>
+        <span class="txt"><b>אני מרים פרויקט</b><span>מחפש שחקנים ואנשי מקצוע להצגה או לסרט</span></span>
+        <span class="go">${ic('arrow-right')}</span>
       </button>
       <button data-a="start-onboard" data-id="pro">
-        <b>💡 אני מחפש עבודה</b>
-        <span>שחקן, תאורן, צלם, איש סאונד, מעצב או מפיק</span>
+        <span class="pi">${ic('lightbulb')}</span>
+        <span class="txt"><b>אני מחפש עבודה</b><span>שחקן, תאורן, צלם, איש סאונד, מעצב או מפיק</span></span>
+        <span class="go">${ic('arrow-right')}</span>
       </button>
       <p class="note" style="margin:0">אפשר גם וגם – הכול מאותו פרופיל. ההרשמה והכניסה דרך חשבון גוגל, בלי סיסמה חדשה.</p>
       <div>${googleBtn('כבר רשום/ה? כניסה עם גוגל', 'btn ghost')}</div>
@@ -1046,7 +1260,7 @@ function termsHtml() {
     <p>אפשר למחוק את החשבון בכל רגע בלשונית ״הפרופיל שלי״. המחיקה מוחקת את כל המידע שלך מהאתר.</p>
 
     <h4>דיווח וחסימה</h4>
-    <p>בכל מודעה, פרופיל ושיחה יש כפתור 🚩 לדיווח. אפשר גם לחסום משתמש, ואז הוא לא יוכל לפנות אליך.</p>
+    <p>בכל מודעה, פרופיל ושיחה יש כפתור דיווח (דגל). אפשר גם לחסום משתמש, ואז הוא לא יוכל לפנות אליך.</p>
   </div>`;
 }
 
@@ -1078,7 +1292,7 @@ function onboarding() {
           ${opts(REGIONS, prev.region || undefined)}
         </select>
 
-        <label>מספר טלפון (נשאר חסוי 🔒 – נחשף רק לאחר אישור מועמדות) *</label>
+        <label>מספר טלפון (נשאר חסוי – נחשף רק לאחר אישור מועמדות) *</label>
         <input name="phone" type="tel" required maxlength="30" value="${esc(prev.phone || '')}" placeholder="050-0000000">
 
         <label>מה אתה עושה? (אפשר לבחור כמה)</label>
@@ -1129,26 +1343,33 @@ function mainView() {
         <span class="user-pill">${esc(u.name)} · ${esc(skillsLabel(u))}</span>
       </div>
       <div class="row">
-        <button class="btn" data-a="open" data-id="proj">+ פרסם פרויקט</button>
-        <button class="btn ghost sm" data-a="theme" aria-label="ערכת נושא">${S.theme === 'dark' ? '☀️' : '🌙'}</button>
+        <button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסם פרויקט</button>
+        <button class="btn ghost sm" data-a="theme" aria-label="${S.theme === 'dark' ? 'מעבר למצב בהיר' : 'מעבר למצב כהה'}">${ic(S.theme === 'dark' ? 'sun' : 'moon')}</button>
       </div>
     </header>
 
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="${S.tab === 'board'}" data-a="tab" data-id="board">
-        פרויקטים פתוחים <span class="chip">${S.projects.filter(isOpen).length}</span>
+        <span class="ti">${ic('layout-grid')}</span>
+        <span class="lbl-long">פרויקטים פתוחים</span><span class="lbl-short">פרויקטים</span>
+        <span class="chip count">${S.projects.filter(isOpen).length}</span>
       </button>
       <button role="tab" aria-selected="${S.tab === 'pros'}" data-a="tab" data-id="pros">
-        אנשי מקצוע <span class="chip">${S.pros.length}</span>
+        <span class="ti">${ic('users')}</span>
+        <span class="lbl-long">אנשי מקצוע</span><span class="lbl-short">אנשי מקצוע</span>
+        <span class="chip count">${S.pros.length}</span>
       </button>
-      <button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps">
-        הודעות ומועמדויות ${pendingCount ? `<span class="badge">${pendingCount}</span>` : ''}
+      <button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps" aria-label="הודעות ומועמדויות${pendingCount ? `, ${pendingCount} ממתינות לאישור` : ''}">
+        <span class="ti">${ic('inbox')}${pendingCount ? `<span class="badge">${pendingCount}</span>` : ''}</span>
+        <span class="lbl-long">הודעות ומועמדויות</span><span class="lbl-short">הודעות</span>
       </button>
       <button role="tab" aria-selected="${S.tab === 'profile'}" data-a="tab" data-id="profile">
-        הפרופיל שלי
+        <span class="ti">${ic('user-round')}</span>
+        <span class="lbl-long">הפרופיל שלי</span><span class="lbl-short">פרופיל</span>
       </button>
       ${S.isAdmin ? `<button role="tab" aria-selected="${S.tab === 'admin'}" data-a="tab" data-id="admin">
-        🛠️ ניהול ${S.admin.stats && S.admin.stats.open_reports ? `<span class="badge">${S.admin.stats.open_reports}</span>` : ''}
+        <span class="ti">${ic('shield-check')}${S.admin.stats && S.admin.stats.open_reports ? `<span class="badge">${S.admin.stats.open_reports}</span>` : ''}</span>
+        <span class="lbl-long">ניהול</span><span class="lbl-short">ניהול</span>
       </button>` : ''}
     </div>
 
@@ -1188,7 +1409,7 @@ function mainView() {
     ` : ''}
 
     ${S.isGuest ? `<div class="note focus-bar" style="margin-bottom:16px">
-      <span>⚠️ החשבון שלך עדיין לא מחובר לגוגל. חבר/י אותו כדי שלא יאבד כשמחליפים מכשיר או מנקים את הדפדפן.</span>
+      <span>${ic('triangle-alert')} החשבון שלך עדיין לא מחובר לגוגל. חבר/י אותו כדי שלא יאבד כשמחליפים מכשיר או מנקים את הדפדפן.</span>
       ${googleBtn('חבר לגוגל', 'btn sm')}
     </div>` : ''}
 
@@ -1201,7 +1422,7 @@ function projectCard(p) {
   const medium = p.medium || 'theater';
   const open = isOpen(p);
   const statusChip = p.status === 'filled'
-    ? '<span class="chip verified">✓ הצוות מלא – תודה!</span>'
+    ? `<span class="chip verified">${ic('circle-check')} הצוות מלא – תודה!</span>`
     : isExpired(p)
       ? '<span class="chip">ההגשה נסגרה</span>'
       : p.stage ? `<span class="chip stage">${esc(p.stage)}</span>` : '';
@@ -1209,7 +1430,7 @@ function projectCard(p) {
     <div class="hd">
       <div class="row" style="justify-content:space-between">
         <div class="row" style="gap:6px">
-          <span class="chip medium">${medium === 'film' ? '🎬' : '🎭'} ${esc(p.format || MEDIA[medium])}</span>
+          <span class="chip medium">${ic(medium === 'film' ? 'clapperboard' : 'drama')} ${esc(p.format || MEDIA[medium])}</span>
           <span class="chip">${esc(p.frame)}</span>
         </div>
         ${statusChip}
@@ -1221,26 +1442,26 @@ function projectCard(p) {
     </div>
     <div class="bd">
       <div class="meta">
-        <span>👤 יוצר: <b>${esc(p.creator)}</b> ${p.studio ? `(${esc(p.studio)})` : ''}</span>
-        <span>📍 מיקום: <b>${esc(p.loc)}</b>${p.region ? ` (${esc(p.region)})` : ''}</span>
-        <span>📅 לו״ז: <b>${esc(p.dates)}</b></span>
-        ${p.deadline && open ? `<span>⏰ הגשה עד: <b>${esc(dateLabel(p.deadline))}</b></span>` : ''}
+        <span>${ic('user')} יוצר: <b>${esc(p.creator)}</b> ${p.studio ? `(${esc(p.studio)})` : ''}</span>
+        <span>${ic('map-pin')} מיקום: <b>${esc(p.loc)}</b>${p.region ? ` (${esc(p.region)})` : ''}</span>
+        <span>${ic('calendar')} לו״ז: <b>${esc(p.dates)}</b></span>
+        ${p.deadline && open ? `<span>${ic('clock')} הגשה עד: <b>${esc(dateLabel(p.deadline))}</b></span>` : ''}
       </div>
       <div>${esc(p.desc)}</div>
-      ${p.tech ? `<div class="note" style="background:var(--in);padding:8px 12px;border-radius:8px;border:1px solid var(--line)">🔧 <b>מפרט טכני / דגשים:</b> ${esc(p.tech)}</div>` : ''}
+      ${p.tech ? `<div class="note" style="background:var(--in);padding:8px 12px;border-radius:8px;border:1px solid var(--line)">${ic('wrench')} <b>מפרט טכני / דגשים:</b> ${esc(p.tech)}</div>` : ''}
       <div class="row" style="margin-top:6px">
         ${!mine ? (hasApplied(p.id)
-          ? `<span class="chip verified">✓ הגשת מועמדות</span>`
+          ? `<span class="chip verified">${ic('check')} הגשת מועמדות</span>`
           : open ? `<button class="btn" data-a="apply-open" data-id="${esc(p.id)}">הגש מועמדות</button>` : '') : ''}
-        ${!mine ? `<button class="btn ghost sm" data-a="chat" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}">💬 שאל את היוצר</button>` : ''}
-        ${open ? `<button class="btn ghost sm" data-a="share-wa" data-id="${esc(p.id)}">📲 שתף בוואטסאפ</button>` : ''}
-        ${!mine ? `<button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}" aria-label="דווח על המודעה">🚩</button>` : ''}
+        ${!mine ? `<button class="btn ghost sm" data-a="chat" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}">${ic('message-circle')} שאל את היוצר</button>` : ''}
+        ${open ? `<button class="btn ghost sm" data-a="share-wa" data-id="${esc(p.id)}">${ic('share-2')} שתף בוואטסאפ</button>` : ''}
+        ${!mine ? `<button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}" aria-label="דווח על המודעה">${ic('flag')}</button>` : ''}
         ${mine ? `
           ${p.status === 'filled'
-            ? `<button class="btn ghost sm" data-a="toggle-filled" data-id="${esc(p.id)}">↩️ פתח מחדש</button>`
-            : `<button class="btn ok sm" data-a="toggle-filled" data-id="${esc(p.id)}">✅ מצאנו, תודה!</button>`}
-          <button class="btn ghost sm" data-a="edit-proj" data-id="${esc(p.id)}">✏️ ערוך</button>
-          <button class="btn ghost sm" data-a="del" data-id="${esc(p.id)}">🗑️ מחק</button>
+            ? `<button class="btn ghost sm" data-a="toggle-filled" data-id="${esc(p.id)}">${ic('rotate-ccw')} פתח מחדש</button>`
+            : `<button class="btn ok sm" data-a="toggle-filled" data-id="${esc(p.id)}">${ic('circle-check')} מצאנו, תודה!</button>`}
+          <button class="btn ghost sm" data-a="edit-proj" data-id="${esc(p.id)}">${ic('pencil')} ערוך</button>
+          <button class="btn ghost sm" data-a="del" data-id="${esc(p.id)}">${ic('trash-2')} מחק</button>
         ` : ''}
       </div>
     </div>
@@ -1270,9 +1491,10 @@ function renderTabContent() {
 
     if (!arr.length) {
       return `<div class="empty">
+        <span class="empty-ic">${ic(S.projects.length ? 'search' : 'drama')}</span>
         <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">${S.projects.length ? 'אין פרויקטים שמתאימים לחיפוש' : 'לוח הפרויקטים נקי'}</h3>
         <p style="margin:0 0 16px">${S.projects.length ? 'נסה לשנות את הסינון.' : 'עדיין אין הפקות רשומות בלוח. היה הראשון לפרסם הצגה או סרט ולגייס צוות.'}</p>
-        <button class="btn" data-a="open" data-id="proj">+ פרסם פרויקט</button>
+        <button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסם פרויקט</button>
       </div>`;
     }
 
@@ -1285,6 +1507,7 @@ function renderTabContent() {
       && (S.region === 'all' || p.region === S.region));
     if (!arr.length) {
       return `<div class="empty">
+        <span class="empty-ic">${ic('users')}</span>
         <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">אין כרגע פרופילים להצגה</h3>
         <p style="margin:0 0 16px">מי שמסמן בפרופיל ״אני מחפש/ת עבודה״ מופיע כאן עם הניסיון והציוד שלו.</p>
         ${!S.user.seeking ? `<button class="btn" data-a="edit-profile">+ הוסף את עצמי לאינדקס</button>` : ''}
@@ -1292,27 +1515,27 @@ function renderTabContent() {
     }
     return arr.map(p => {
       const mine = isMine(p);
-      const link = linkHtml(p.link, '🔗 צפייה בתיק עבודות / אינסטגרם');
+      const link = linkHtml(p.link, ic('link') + ' צפייה בתיק עבודות / אינסטגרם');
       return `<article class="card">
         <div class="hd">
           <div class="row" style="justify-content:space-between">
             <div class="need-tags" style="margin:0">${skillsOf(p).map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>
-            <span class="chip verified">✓ ${p.completed || 0} הפקות ב״קול במה״</span>
+            <span class="chip verified">${ic('check')} ${p.completed || 0} הפקות ב״קול במה״</span>
           </div>
           <h3>${esc(p.name)}</h3>
         </div>
         <div class="bd">
           <div class="meta">
-            <span>📍 ${esc(p.loc)}${p.region ? ` (${esc(p.region)})` : ''}</span>
-            ${p.studioOrGear ? `<span>🎛️ <b>ציוד/כלים:</b> ${esc(p.studioOrGear)}</span>` : ''}
+            <span>${ic('map-pin')} ${esc(p.loc)}${p.region ? ` (${esc(p.region)})` : ''}</span>
+            ${p.studioOrGear ? `<span>${ic('sliders-horizontal')} <b>ציוד/כלים:</b> ${esc(p.studioOrGear)}</span>` : ''}
           </div>
           <div><b>ניסיון והפקות קודמות:</b> ${esc(p.past)}</div>
           ${link ? `<div>${link}</div>` : ''}
           <div class="row" style="margin-top:6px">
             ${mine
-              ? `<button class="btn ghost sm" data-a="edit-profile">✏️ ערוך את הפרופיל שלי</button>`
-              : `<button class="btn" data-a="chat" data-other="${esc(p.uid)}" data-proj="">💬 שלח הודעה</button>
-                 <button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="" aria-label="דווח על הפרופיל">🚩</button>`}
+              ? `<button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} ערוך את הפרופיל שלי</button>`
+              : `<button class="btn" data-a="chat" data-other="${esc(p.uid)}" data-proj="">${ic('message-circle')} שלח הודעה</button>
+                 <button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="" aria-label="דווח על הפרופיל">${ic('flag')}</button>`}
           </div>
         </div>
       </article>`;
@@ -1336,6 +1559,7 @@ function renderTabContent() {
     const myApps = S.apps;
     if (!myApps.length) {
       return convHtml + `<div class="empty">
+        <span class="empty-ic">${ic('inbox')}</span>
         <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">אין כרגע מועמדויות פעילות</h3>
         <p style="margin:0">כשתגיש מועמדות לפרויקט או כשיפנו לפרויקט שפרסמת – הכל יופיע כאן לאישור.</p>
       </div>`;
@@ -1347,7 +1571,7 @@ function renderTabContent() {
       const partnerUid = isOwner ? a.applicantUid : a.ownerUid;
       const waDigits = formatWaPhone(partnerPhone);
       const waText = encodeURIComponent(`היי ${partnerName || ''}! אנחנו מחוברים דרך "קול במה" לגבי ההפקה "${a.projTitle}".`);
-      const link = linkHtml(a.applicantLink, '🔗 קישור לתיק עבודות / אינסטגרם');
+      const link = linkHtml(a.applicantLink, ic('link') + ' קישור לתיק עבודות / אינסטגרם');
 
       return `<article class="card">
         <div class="hd">
@@ -1358,22 +1582,22 @@ function renderTabContent() {
           <h3>${esc(a.applicantName)} <span style="font-size:14px;font-weight:400;color:var(--mut)">(${esc(a.applicantLoc)})</span></h3>
         </div>
         <div class="bd">
-          ${a.applicantGear ? `<div class="meta">🎛️ <b>ציוד / מסגרת:</b> ${esc(a.applicantGear)}</div>` : ''}
+          ${a.applicantGear ? `<div class="meta">${ic('sliders-horizontal')} <b>ציוד / מסגרת:</b> ${esc(a.applicantGear)}</div>` : ''}
           <div><b>ניסיון קודם:</b> ${esc(a.applicantPast)}</div>
           ${link ? `<div>${link}</div>` : ''}
           <div style="background:var(--in);padding:10px 12px;border-radius:10px;border:1px solid var(--line)">
-            💬 <b>הודעת המועמד:</b> "${esc(a.note)}"
+            ${ic('message-circle')} <b>הודעת המועמד:</b> "${esc(a.note)}"
           </div>
           <div class="row" style="margin-top:6px">
             ${a.status === 'pending' ? (
               isOwner ? `
-                <button class="btn ok" data-a="app-approve" data-id="${esc(a.id)}">✓ אשר מועמד ופתח קשר</button>
+                <button class="btn ok" data-a="app-approve" data-id="${esc(a.id)}">${ic('check')} אשר מועמד ופתח קשר</button>
                 <button class="btn ghost" data-a="app-decline" data-id="${esc(a.id)}">דחה פנייה</button>
-              ` : `<span class="chip">⏳ ממתין לאישור היוצר (${esc(a.ownerName || '')})</span>`
+              ` : `<span class="chip">${ic('hourglass')} ממתין לאישור היוצר (${esc(a.ownerName || '')})</span>`
             ) : a.status === 'approved' ? `
-              <span class="chip verified">✓ מועמדות אושרה!</span>
-              <button class="btn sm" data-a="chat" data-other="${esc(partnerUid)}" data-proj="${esc(a.projId)}">💬 צ׳אט באפליקציה</button>
-              ${waDigits ? `<a class="btn wa sm" href="https://wa.me/${waDigits}?text=${waText}" target="_blank" rel="noopener">📲 עבור לוואטסאפ (${esc(partnerPhone)})</a>` : ''}
+              <span class="chip verified">${ic('circle-check')} מועמדות אושרה!</span>
+              <button class="btn sm" data-a="chat" data-other="${esc(partnerUid)}" data-proj="${esc(a.projId)}">${ic('message-circle')} צ׳אט באפליקציה</button>
+              ${waDigits ? `<a class="btn wa sm" href="https://wa.me/${waDigits}?text=${waText}" target="_blank" rel="noopener">${ic('phone')} עבור לוואטסאפ (${esc(partnerPhone)})</a>` : ''}
             ` : `<span class="chip">פנייה נדחתה</span>`}
           </div>
         </div>
@@ -1404,7 +1628,7 @@ function renderTabContent() {
       <p class="note" style="margin:0">את תוכן ההודעות ומספרי הטלפון גם המנהל לא רואה, כמו שכתוב בתנאי השימוש.</p>
 
       <div class="row" style="justify-content:space-between">
-        <h3 class="section-title">🚩 דיווחים ${st.open_reports ? `<span class="badge">${st.open_reports}</span>` : ''}</h3>
+        <h3 class="section-title">${ic('flag')} דיווחים ${st.open_reports ? `<span class="badge">${st.open_reports}</span>` : ''}</h3>
         <button class="btn ghost sm" data-a="admin-toggle-handled">${S.admin.showHandled ? 'הסתר דיווחים שטופלו' : 'הצג גם דיווחים שטופלו'}</button>
       </div>
       ${reports.length ? reports.map(r => `<article class="card"${r.handled ? ' style="opacity:.6"' : ''}><div class="bd">
@@ -1419,23 +1643,23 @@ function renderTabContent() {
         </div>
         ${r.details ? `<div>${esc(r.details)}</div>` : ''}
         <div class="row">
-          <button class="btn ${r.handled ? 'ghost' : 'ok'} sm" data-a="report-handled" data-id="${esc(r.id)}">${r.handled ? '↩️ סמן כלא טופל' : '✓ סמן כטופל'}</button>
-          ${r.project_id && projTitle(r.project_id) ? `<button class="btn ghost sm" data-a="admin-del-proj" data-id="${esc(r.project_id)}">🗑️ מחק את הפרויקט</button>` : ''}
-          ${r.reported_user_id && S.profiles[r.reported_user_id] && r.reported_user_id !== S.uid ? `<button class="btn ghost sm" data-a="admin-del-user" data-id="${esc(r.reported_user_id)}">⛔ מחק את המשתמש</button>` : ''}
+          <button class="btn ${r.handled ? 'ghost' : 'ok'} sm" data-a="report-handled" data-id="${esc(r.id)}">${r.handled ? ic('rotate-ccw') + ' סמן כלא טופל' : ic('check') + ' סמן כטופל'}</button>
+          ${r.project_id && projTitle(r.project_id) ? `<button class="btn ghost sm" data-a="admin-del-proj" data-id="${esc(r.project_id)}">${ic('trash-2')} מחק את הפרויקט</button>` : ''}
+          ${r.reported_user_id && S.profiles[r.reported_user_id] && r.reported_user_id !== S.uid ? `<button class="btn ghost sm" data-a="admin-del-user" data-id="${esc(r.reported_user_id)}">${ic('ban')} מחק את המשתמש</button>` : ''}
         </div>
-      </div></article>`).join('') : '<div class="empty" style="padding:20px">אין דיווחים פתוחים 🎉</div>'}
+      </div></article>`).join('') : `<div class="empty" style="padding:20px">${ic('circle-check')} אין דיווחים פתוחים</div>`}
 
-      <h3 class="section-title">👥 משתמשים (${users.length})</h3>
+      <h3 class="section-title">${ic('users')} משתמשים (${users.length})</h3>
       ${users.map(u => `<div class="admin-row">
         <span>
           <b>${esc(u.name)}</b>
           <span class="note">· ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · נרשם/ה ${esc(day(u.created_at))}${u.seeking ? ' · באינדקס' : ''}</span>
           ${u.skills.length ? `<div class="note" style="margin:2px 0 0">${esc(u.skills.map(s => ROLES[s] || s).join(' · '))}</div>` : ''}
         </span>
-        ${u.id === S.uid ? '<span class="chip verified">זה את/ה</span>' : `<button class="btn ghost sm" data-a="admin-del-user" data-id="${esc(u.id)}">⛔ מחק</button>`}
+        ${u.id === S.uid ? '<span class="chip verified">זה את/ה</span>' : `<button class="btn ghost sm" data-a="admin-del-user" data-id="${esc(u.id)}">${ic('ban')} מחק</button>`}
       </div>`).join('')}
 
-      <h3 class="section-title">🎭 פרויקטים (${S.projects.length})</h3>
+      <h3 class="section-title">${ic('drama')} פרויקטים (${S.projects.length})</h3>
       ${S.projects.length ? S.projects.map(p => `<div class="admin-row">
         <span>
           <b>${esc(p.title)}</b>
@@ -1443,7 +1667,7 @@ function renderTabContent() {
         </span>
         <span class="row">
           ${p.status !== 'filled' ? `<button class="btn ghost sm" data-a="admin-close-proj" data-id="${esc(p.id)}">סגור</button>` : ''}
-          <button class="btn ghost sm" data-a="admin-del-proj" data-id="${esc(p.id)}">🗑️ מחק</button>
+          <button class="btn ghost sm" data-a="admin-del-proj" data-id="${esc(p.id)}">${ic('trash-2')} מחק</button>
         </span>
       </div>`).join('') : '<div class="empty" style="padding:20px">אין פרויקטים עדיין</div>'}
     `;
@@ -1452,28 +1676,28 @@ function renderTabContent() {
   if (S.tab === 'profile') {
     const u = S.user;
     const skills = skillsOf(u);
-    const link = linkHtml(u.link, '🔗 ' + esc(u.link));
+    const link = linkHtml(u.link, ic('link') + ' ' + esc(u.link));
     return `<div class="list">
       <div class="card" style="padding:24px">
         <div class="row" style="justify-content:space-between;margin-bottom:12px">
-          ${u.seeking ? '<span class="chip verified">✓ מחפש/ת עבודה – מופיע/ה באינדקס</span>' : '<span class="chip">לא מופיע/ה באינדקס אנשי המקצוע</span>'}
-          <button class="btn ghost sm" data-a="edit-profile">✏️ ערוך פרופיל</button>
+          ${u.seeking ? `<span class="chip verified">${ic('check')} מחפש/ת עבודה – מופיע/ה באינדקס</span>` : '<span class="chip">לא מופיע/ה באינדקס אנשי המקצוע</span>'}
+          <button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} ערוך פרופיל</button>
         </div>
         <h3 style="font-size:28px">${esc(u.name)}</h3>
         ${skills.length ? `<div class="need-tags">${skills.map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>` : ''}
-        <p class="meta" style="margin:10px 0 14px">📍 ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · 🔒 טלפון לאישור: ${esc(u.phone || 'לא הוזן')}</p>
+        <p class="meta" style="margin:10px 0 14px">${ic('map-pin')} ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · ${ic('lock')} טלפון לאישור: ${esc(u.phone || 'לא הוזן')}</p>
         ${u.studioOrGear ? `<p><b>מסגרת / ציוד וכלים:</b> ${esc(u.studioOrGear)}</p>` : ''}
         <p><b>ניסיון והפקות קודמות:</b> ${esc(u.past)}</p>
         ${link ? `<p>${link}</p>` : ''}
       </div>
 
       <div class="card" style="padding:20px">
-        <h4 style="font-size:18px;margin-bottom:6px">🔑 החשבון שלך</h4>
+        <h4 style="font-size:18px;margin-bottom:6px">${ic('key-round')} החשבון שלך</h4>
         ${S.isGuest ? `
           <p class="note" style="margin:0 0 10px">החשבון שמור כרגע רק בדפדפן הזה. חבר/י אותו לגוגל, ואז אפשר להיכנס מכל מכשיר.</p>
           ${googleBtn('חבר לגוגל', 'btn sm')}
         ` : `
-          <p class="note" style="margin:0 0 10px">✓ מחובר/ת עם חשבון גוגל. אפשר להיכנס מכל מכשיר.</p>
+          <p class="note" style="margin:0 0 10px">${ic('circle-check')} מחובר/ת עם חשבון גוגל. אפשר להיכנס מכל מכשיר.</p>
           <button class="btn ghost sm" data-a="logout">התנתק</button>
         `}
       </div>
@@ -1481,7 +1705,7 @@ function renderTabContent() {
       ${installCard()}
 
       <div class="card" style="padding:20px">
-        <h4 style="font-size:18px;margin-bottom:6px">🛡️ בטיחות ופרטיות</h4>
+        <h4 style="font-size:18px;margin-bottom:6px">${ic('shield-check')} בטיחות ופרטיות</h4>
         ${S.blocked.size ? `
           <p class="note" style="margin:0 0 6px">משתמשים שחסמת:</p>
           <div class="row" style="margin-bottom:12px">
@@ -1489,8 +1713,8 @@ function renderTabContent() {
           </div>
         ` : '<p class="note" style="margin:0 0 12px">לא חסמת אף אחד.</p>'}
         <div class="row">
-          <button class="btn ghost sm" data-a="terms">📄 תנאי שימוש ופרטיות</button>
-          <button class="btn ghost sm" data-a="delete-account">🗑️ מחק את החשבון שלי</button>
+          <button class="btn ghost sm" data-a="terms">${ic('file-text')} תנאי שימוש ופרטיות</button>
+          <button class="btn ghost sm" data-a="delete-account">${ic('trash-2')} מחק את החשבון שלי</button>
         </div>
       </div>
     </div>`;
@@ -1600,7 +1824,7 @@ function modalView() {
           <div style="color:var(--gold);font-weight:700;font-size:13px">${esc(proj ? proj.title : skillsOf(other).map(s => ROLES[s] || s).join(' · '))}</div>
         </div>
         <div class="row">
-          <button class="btn ghost sm" data-a="report" data-other="${esc(c.otherId)}" data-proj="${esc(c.projId || '')}">🚩 דווח / חסום</button>
+          <button class="btn ghost sm" data-a="report" data-other="${esc(c.otherId)}" data-proj="${esc(c.projId || '')}">${ic('flag')} דווח / חסום</button>
           <button class="btn ghost sm" data-a="close" aria-label="סגור">✕</button>
         </div>
       </div>
@@ -1616,7 +1840,7 @@ function modalView() {
       </form>`;
   } else if (m === 'report') {
     const name = nameOf(S.report.userId);
-    h = `<h3>🚩 דיווח</h3>
+    h = `<h3>${ic('flag')} דיווח</h3>
       <p class="note">הדיווח מגיע רק למנהל האתר. ${esc(name)} לא יידע/תדע שדיווחת.</p>
       <form data-f="report">
         <label>מה הבעיה? *</label>
@@ -1723,6 +1947,7 @@ document.addEventListener('click', async e => {
   } else if (a === 'tab') {
     S.tab = id;
     render();
+    window.scrollTo(0, 0);
     if (id === 'admin') { await adminLoad(); render(); }
   } else if (a === 'admin-toggle-handled') {
     S.admin.showHandled = !S.admin.showHandled;
