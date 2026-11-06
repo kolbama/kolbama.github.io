@@ -8,6 +8,21 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="קול במה">
 <meta name="theme-color" content="#14070b">
+<meta name="description" content="לוח פרויקטים חינמי לתיאטרון וקולנוע: מוצאים שחקנים, תאורנים, צלמים, אנשי סאונד ועוד, או את ההפקה הבאה שלכם.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="קול במה">
+<meta property="og:locale" content="he_IL">
+<meta property="og:title" content="קול במה – יוצרים ואנשי במה וקולנוע">
+<meta property="og:description" content="מרימים הצגה או סרט? מחפשים עבודה? לוח פרויקטים חינמי לתיאטרון וקולנוע.">
+<meta property="og:url" content="https://kolbama.github.io/">
+<meta property="og:image" content="https://kolbama.github.io/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="קול במה – יוצרים ואנשי במה וקולנוע נפגשים כאן">
+<meta name="twitter:card" content="summary_large_image">
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -649,8 +664,42 @@ let S = {
 
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', S.theme);
+  document.querySelector('meta[name=theme-color]').content = S.theme === 'dark' ? '#14070b' : '#f6f1f3';
 }
 applyTheme();
+
+// ───────────── Phone app (PWA) ─────────────
+
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); // we show our own button in the profile tab
+  installPrompt = e;
+  if (S.tab === 'profile') render();
+});
+window.addEventListener('appinstalled', () => { installPrompt = null; toast('האפליקציה הותקנה 🎉'); });
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+function installCard() {
+  let body;
+  if (isStandalone()) {
+    body = '<p class="note" style="margin:0">✓ את/ה כבר באפליקציה.</p>';
+  } else if (installPrompt) {
+    body = `<p class="note" style="margin:0 0 10px">מוסיפים את קול במה למסך הבית, ונפתח כמו אפליקציה.</p>
+      <button class="btn sm" data-a="install">📲 התקן את האפליקציה</button>`;
+  } else if (isIOS()) {
+    body = '<p class="note" style="margin:0">באייפון: פותחים את האתר ב־Safari, לוחצים על כפתור השיתוף (ריבוע עם חץ למעלה), ובוחרים <b>״הוספה למסך הבית״</b>.</p>';
+  } else {
+    body = '<p class="note" style="margin:0">בטלפון אנדרואיד: פותחים את האתר ב־Chrome, לוחצים על שלוש הנקודות למעלה, ובוחרים <b>״הוספה למסך הבית״</b> או <b>״התקנת אפליקציה״</b>.</p>';
+  }
+  return `<div class="card" style="padding:20px">
+    <h4 style="font-size:18px;margin-bottom:6px">📱 קול במה בטלפון</h4>
+    ${body}
+  </div>`;
+}
 
 // A shared link looks like .../#p=<projectId>
 function readHash() {
@@ -1429,6 +1478,8 @@ function renderTabContent() {
         `}
       </div>
 
+      ${installCard()}
+
       <div class="card" style="padding:20px">
         <h4 style="font-size:18px;margin-bottom:6px">🛡️ בטיחות ופרטיות</h4>
         ${S.blocked.size ? `
@@ -1646,6 +1697,12 @@ document.addEventListener('click', async e => {
       return;
     }
     S.onboardingType = id;
+    render();
+  } else if (a === 'install') {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice.catch(() => {});
+    installPrompt = null;
     render();
   } else if (a === 'google') {
     el.disabled = true;
