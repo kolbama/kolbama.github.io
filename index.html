@@ -2,7 +2,8 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="color-scheme" content="dark light">
 <title>קול במה – יוצרים ואנשי במה וקולנוע</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,6 +24,9 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="קול במה – יוצרים ואנשי במה וקולנוע נפגשים כאן">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -626,20 +630,276 @@ textarea { min-height: 88px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ───────────── Design v3 (7.11.2026) ─────────────
+   Warmer "velvet and curtain" palette, poster-style cards, short phone filters, animated welcome.
+   Motion rules from the ui-ux-pro-max skill (motion.csv): 400-600ms ease-out, stagger ~80ms,
+   transform/opacity only, at most ~8 staggered items, final state when reduced motion is on. */
+:root {
+  --bg: #f6efe3;
+  --card: #fffbf4;
+  --line: #e3d3bb;
+  --tx: #2a1016;
+  --mut: #6b5157;
+  --ac: #a3182f;
+  --ac-hover: #85101f;
+  --ac-text: #a3182f;
+  --gold: #8c5707;
+  --gold-bg: rgba(176, 112, 16, 0.13);
+  --ok: #17673f;
+  --in: #fbf5ea;
+  --glow: rgba(214, 150, 70, 0.20);
+  --shadow: 0 10px 30px -12px rgba(70, 30, 20, 0.22);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .12 0 0 0 0 .08 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"] {
+  --bg: #100508;
+  --card: #1b0a10;
+  --line: #3d1b25;
+  --tx: #f8eee4;
+  --mut: #c2a6ad;
+  --ac: #d22d49;
+  --ac-hover: #e63f5b;
+  --ac-text: #ff7b90;
+  --gold: #f2bb52;
+  --gold-bg: rgba(242, 187, 82, 0.14);
+  --ok: #34d399;
+  --in: #130609;
+  --glow: rgba(160, 30, 60, 0.38);
+  --shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.65);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body {
+  background-color: var(--bg);
+  background-image: var(--grain), radial-gradient(120% 55% at 50% -8%, var(--glow), transparent 70%);
+  background-repeat: repeat, no-repeat;
+  line-height: 1.65;
+}
+.wrap { padding: 24px 16px 72px; }
+h1, h2, h3, h4 { text-wrap: balance; }
+.chip.stage, .ext-link, .linklike { color: var(--ac-text); }
+.chip.stage { border-color: var(--ac-text); }
+.btn:not(.ghost):not(.ok):not(.wa) { background: linear-gradient(180deg, var(--ac), var(--ac-hover)); }
+.btn:not(.ghost):not(.ok):not(.wa):hover { filter: brightness(1.1); }
+.btn.ghost { border-color: color-mix(in srgb, var(--mut) 40%, var(--line)); }
+.badge[hidden] { display: none; }
+
+/* Header and tabs */
+header.top { padding: 4px 0 20px; margin-bottom: 20px; }
+.brand h2 { font-size: 36px; letter-spacing: -.5px; }
+.user-pill { padding: 5px 12px; }
+
+/* Search + short phone filters */
+.searchbar { display: flex; gap: 8px; margin-bottom: 12px; }
+.srch { position: relative; flex: 1; margin: 0; }
+.srch .ic { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--mut); pointer-events: none; }
+.srch input { padding-inline-start: 44px; border-radius: 14px; }
+.filter-toggle { display: none; position: relative; }
+.filter-toggle .badge { position: absolute; top: -7px; inset-inline-end: -7px; min-width: 20px; text-align: center; }
+.filters { display: grid; gap: 8px; margin-bottom: 20px; grid-template-columns: repeat(4, 1fr); }
+.filters.fl2 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 760px) {
+  .filter-toggle { display: inline-flex; }
+  .filters { display: none; margin-top: -2px; }
+  .filters.open { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
+/* Poster-style cards: a colored spine, a big title, one main action */
+.list { gap: 20px; }
+.card { border-radius: 20px; border-inline-start: 6px solid var(--kind, var(--line)); box-shadow: var(--shadow); }
+.card.m-theater { --kind: var(--ac); --kind-text: var(--ac-text); }
+.card.m-film { --kind: var(--gold); --kind-text: var(--gold); }
+.card.m-person { --kind: var(--gold); }
+.card .hd { padding: 20px 22px 18px; background: linear-gradient(180deg, var(--gold-bg), transparent 90%); }
+.card .bd { padding: 18px 22px 20px; gap: 14px; }
+.card h3 { font-size: clamp(26px, 6.4vw, 32px); line-height: 1.15; letter-spacing: -.3px; margin: 10px 0 0; }
+.hd-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kind { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; letter-spacing: .03em; color: var(--kind-text, var(--gold)); }
+.need { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.need-lbl { font-size: 12px; font-weight: 700; color: var(--mut); padding-top: 6px; letter-spacing: .04em; }
+.need .need-tags { margin-top: 0; flex: 1 1 200px; }
+.role-tag { border: 0; background: var(--gold-bg); padding: 4px 12px; border-radius: 99px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 16px; border-top: 1px dashed var(--line); }
+.actions .btn:not(.sm) { flex: 1 1 200px; }
+@media (max-width: 560px) { .actions .btn:not(.sm) { flex-basis: 100%; } }
+.who { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.who-txt { display: grid; gap: 6px; justify-items: start; }
+.who-txt h3 { margin: 0; }
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--av, 48px);
+  height: var(--av, 48px);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ac), #5a0f22);
+  box-shadow: 0 0 0 3px var(--gold-bg);
+  color: #fff;
+  font-family: 'Frank Ruhl Libre', Georgia, serif;
+  font-weight: 900;
+  font-size: calc(var(--av, 48px) * .46);
+  line-height: 1;
+}
+
+/* Form sections */
+.fs-title { display: flex; align-items: center; gap: 10px; margin: 24px 0 2px; font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: 19px; color: var(--tx); }
+.fs-title:first-child, form > .fs-title:first-child { margin-top: 6px; }
+.fs-title span { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--gold-bg); color: var(--gold); font: 700 13px 'Heebo', sans-serif; }
+
+/* Welcome: spotlight, drifting tiles, shimmering title, counters, ticker */
+.hero { gap: 28px; }
+.hero > * { animation: none; }
+.hero::before { transform-origin: 50% 0; animation: beam 5s ease-in-out infinite alternate, sway 9s ease-in-out infinite alternate; }
+@keyframes sway { from { transform: translateX(-50%) rotate(-4deg); } to { transform: translateX(-50%) rotate(4deg); } }
+.hero-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hero h1 {
+  font-size: clamp(68px, 19vw, 132px);
+  line-height: .95;
+  background: linear-gradient(100deg, var(--tx) 30%, var(--gold) 50%, var(--tx) 70%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 8px;
+  animation: shimmer 8s ease-in-out infinite alternate;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+.hero p.tagline { font-size: clamp(20px, 5vw, 26px); font-weight: 700; }
+.hero-stage { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.tile {
+  position: absolute;
+  display: block;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 8px;
+  background: var(--c);
+  opacity: .3;
+  transform: rotate(var(--r));
+  animation: drift var(--d) ease-in-out infinite alternate;
+}
+.t1 { --s: 70px; --c: var(--ac); --r: 14deg; --d: 7s; top: 22%; inset-inline-start: 5%; }
+.t2 { --s: 44px; --c: var(--gold); --r: -18deg; --d: 9s; top: 12%; inset-inline-end: 7%; }
+.t3 { --s: 96px; --c: #7a1530; --r: 24deg; --d: 8s; top: 52%; inset-inline-end: -26px; }
+.t4 { --s: 36px; --c: var(--gold); --r: -30deg; --d: 6s; top: 66%; inset-inline-start: 9%; }
+.t5 { --s: 56px; --c: var(--ac); --r: -10deg; --d: 10s; top: 8%; inset-inline-end: 34%; }
+.t6 { --s: 80px; --c: var(--line); --r: 32deg; --d: 11s; top: 80%; inset-inline-start: -22px; opacity: .6; }
+@keyframes drift {
+  from { transform: translateY(-10px) rotate(var(--r)); }
+  to { transform: translateY(12px) rotate(calc(var(--r) + 10deg)); }
+}
+[data-rise] { animation: rise-in .6s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 80ms); }
+html.anim-off [data-rise] { animation: none; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.stats-strip { display: flex; gap: 10px; margin-top: 20px; }
+.stats-strip > div { flex: 1 1 0; max-width: 150px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.stats-strip b { display: block; font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: 32px; line-height: 1.05; color: var(--gold); }
+.stats-strip span { font-size: 13px; color: var(--mut); line-height: 1.3; display: block; }
+.fresh { display: inline-flex; align-items: center; gap: 8px; margin: 18px 0 0; padding: 8px 14px; border-radius: 99px; background: var(--gold-bg); color: var(--gold); font-weight: 700; font-size: 14px; }
+.ticker { margin-inline: -16px; overflow: hidden; border-block: 1px solid var(--line); padding: 12px 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.ticker-track { display: flex; gap: 26px; width: max-content; white-space: nowrap; font-weight: 700; font-size: 15px; color: var(--mut); animation: tick 55s linear infinite; }
+.ticker-track i { align-self: center; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+@keyframes tick { to { transform: translateX(50%); } }
+
+/* Warning bar inside a form dialog before throwing away typed text */
+.discard { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--gold); border-radius: 12px; background: var(--gold-bg); font-weight: 600; font-size: 14px; }
 .terms p, .terms li { font-size: 14px; margin: 4px 0; }
 .terms ul { margin: 4px 0; padding-inline-start: 20px; }
+
+/* ───── Design v3.1: GSAP motion + skills pass ───── */
+:root { --ease-out: cubic-bezier(.23, 1, .32, 1); }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { -webkit-tap-highlight-color: transparent; }
+button, [role="tab"], select { touch-action: manipulation; }
+.dlg, .ov { overscroll-behavior: contain; }
+#main:focus { outline: none; }
+
+/* Skip link: first Tab stop, jumps over the header */
+.skip-link { position: fixed; top: 8px; inset-inline-start: 8px; z-index: 100; padding: 10px 16px; border-radius: 10px; background: var(--gold); color: #1a1208; font-weight: 800; text-decoration: none; transform: translateY(-160%); transition: transform .2s var(--ease-out); }
+.skip-link:focus-visible { transform: none; }
+
+/* Brand name replaces the old h2 in the header (the page now has one real h1 per screen) */
+.brand-name { font-family: 'Frank Ruhl Libre', Georgia, serif; font-size: 32px; font-weight: 900; line-height: 1.2; letter-spacing: -.5px; }
+@media (min-width: 761px) { .brand-name { font-size: 36px; } }
+
+/* Page title: one per tab. Words are cut by an overflow box so GSAP can slide them up. */
+.page-title { font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: clamp(24px, 5vw, 32px); line-height: 1.25; margin: 4px 0 14px; text-wrap: balance; }
+.sw { display: inline-block; overflow: hidden; vertical-align: top; padding-block: .12em; margin-block: -.12em; }
+.sw-i { display: inline-block; will-change: transform; }
+
+/* Scroll progress line (GSAP drives scaleX) */
+.progress { position: fixed; top: 0; inset-inline: 0; height: 3px; z-index: 90; background: linear-gradient(90deg, var(--gold), var(--ac)); transform: scaleX(0); transform-origin: right center; pointer-events: none; }
+
+/* When GSAP is running it plays the intro, so the CSS-only version steps aside */
+html.gsap-on [data-rise] { animation: none; }
+
+/* Press feedback and hover only where a real mouse exists */
+button:active:not(:disabled), .btn:active, [role="tab"]:active { transform: scale(.96); }
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { transform: translateY(-2px); }
+}
+.stats-strip b, .chip.count, .badge, [data-count] { font-variant-numeric: tabular-nums; }
+.card p, .card .meta, .desc { text-wrap: pretty; }
+.card h3, .who-txt h3 { overflow-wrap: anywhere; }
+.card, .who-txt, .need-tags, .meta { min-width: 0; }
+
+/* Contrast: the burgundy accent as TEXT on the dark background was 4.0:1 (needs 4.5:1). A lighter shade for text only. */
+:root { --ac-tx: var(--ac); }
+:root[data-theme="dark"] { --ac-tx: #f0566e; }
+.chip.stage, .ext-link, .linklike { color: var(--ac-tx); }
+.chip.stage { border-color: var(--ac-tx); }
+
+/* Short "why we ask" note under a form field (privacy: notice at the point of collection) */
+.field-why { display: flex; gap: 6px; align-items: center; margin: 6px 0 0; font-size: 13px; }
+
+/* Tiles: GSAP moves them through CSS variables, so the CSS drift animation keeps working on top */
+.tile { translate: 0 calc(var(--ty, 0px) + var(--py, 0px)); }
+
+/* Hero title: gold line drawn under it on entry */
+.hero h1 { position: relative; }
+.title-line { display: block; height: 4px; width: min(220px, 50%); margin-top: 6px; border-radius: 4px; background: linear-gradient(90deg, transparent, var(--gold)); transform-origin: right center; }
+
+/* "How it works" section under the opening screen */
+.how { padding-block: 56px 72px; display: grid; gap: 28px; }
+.how-title { font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: clamp(30px, 7vw, 46px); line-height: 1.15; text-wrap: balance; }
+.steps-wrap { position: relative; }
+.rail { position: absolute; top: 24px; bottom: 24px; inset-inline-start: 23px; width: 3px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.rail-fill { display: block; height: 100%; background: linear-gradient(var(--gold), var(--ac)); transform-origin: top center; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.step { position: relative; display: flex; gap: 16px; align-items: flex-start; padding: 18px; padding-inline-start: 0; }
+.step-n { flex: none; position: relative; z-index: 1; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--card); border: 2px solid var(--gold); color: var(--gold); font: 900 22px 'Frank Ruhl Libre', Georgia, serif; font-variant-numeric: tabular-nums; }
+.step h3 { font-family: 'Frank Ruhl Libre', Georgia, serif; font-size: 22px; font-weight: 900; margin: 6px 0 4px; }
+.step p { margin: 0; color: var(--mut); line-height: 1.6; text-wrap: pretty; max-width: 46ch; }
+.how-cta { margin-top: 12px; padding: 28px 22px; border-radius: 22px; border: 1px solid var(--line); background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 14%, var(--card)), var(--card)); display: grid; gap: 18px; }
+.how-cta .how-title { font-size: clamp(24px, 5.5vw, 34px); }
+.how-cta .row { flex-wrap: wrap; }
+@media (min-width: 761px) {
+  .steps { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .rail { top: 23px; bottom: auto; inset-inline: 24px; width: auto; height: 3px; }
+  .rail-fill { transform-origin: right center; }
+  .step { flex-direction: column; padding: 0 0 0 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress { display: none; }
+  .skip-link { transition: none; }
+}
 </style>
 </head>
 <body>
-<div id="main"></div>
+<a class="skip-link" href="#main">דלגו לתוכן הראשי</a>
+<main id="main" tabindex="-1"></main>
 <div id="modal"></div>
-<div id="toast" class="toast" role="status" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
+<!-- GSAP 3.15.0 (free "no charge" license): heading and scroll animations. The site works without it. -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script>
 // Public (publishable) key – safe in the browser; Row Level Security in the database decides who sees what
-const SUPABASE_URL = 'https://tktdrelocinljiniqxwz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_JG3ulizAh7Hb1rbulTa4tw_JnO59XIT';
+// Project kol-bama-eu, region eu-central-1 (Frankfurt). Moved from ap-south-1 on 7.11.2026.
+const SUPABASE_URL = 'https://nevbqvduboalpwmehcnj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_pFTmEeg9kUiLlLTFrr8gbQ_rGJeCUo2';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'pkce' } });
 
 const ROLES = {
@@ -782,6 +1042,54 @@ const ICONS = {
 // Decorative by default (aria-hidden); buttons that show only an icon carry their own aria-label
 const ic = name => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
 
+// ───────────── Design v3 helpers ─────────────
+
+// Round badge with the first letter of a name (no photo upload needed)
+const avatar = (name, size = 48) =>
+  `<span class="avatar" style="--av:${size}px" aria-hidden="true">${esc([...String(name || '?').trim()][0] || '?')}</span>`;
+
+const filterCount = () => ['region', 'medium', 'role', 'frame'].filter(k => S[k] !== 'all').length;
+
+// A visitor without a profile can look at the board (a shared project link opens it directly).
+// Everything personal (apply, message, publish, people list) asks them to join first.
+const isBrowsingGuest = () => !S.user && S.isGuest && (S.browsing || !!S.focusId);
+
+// Typed-text protection for form dialogs: remember how the form looked when it opened,
+// and ask before closing if something changed.
+const FORM_MODALS = ['proj', 'apply', 'report'];
+const formSnap = f => JSON.stringify([...f.elements].filter(c => c.name).map(c => c.type === 'checkbox' ? c.checked : c.value))
+  + [...f.querySelectorAll('.role-pill.active')].map(b => b.dataset.id).join(',');
+const formDirty = () => {
+  const f = document.querySelector('.dlg form[data-f]');
+  return !!f && S.snap !== null && formSnap(f) !== S.snap;
+};
+
+// Scrolling strip of professions under the welcome screen (decorative)
+const tickerHtml = () => {
+  const items = Object.values(ROLES).map(r => `<span>${esc(r.split(' / ')[0])}</span><i></i>`).join('');
+  return `<div class="ticker" aria-hidden="true"><div class="ticker-track">${items}${items}</div></div>`;
+};
+
+// Counts up from 0. The final number is already in the HTML, so nothing breaks if animation is off
+// or the tab is in the background (requestAnimationFrame does not run there).
+function animateCounts() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const to = Number(el.dataset.count) || 0;
+    if (!to) return;
+    requestAnimationFrame(t0 => {
+      el.textContent = '0';
+      const dur = 900 + Math.min(to, 40) * 8;
+      const step = t => {
+        const p = Math.min(1, (t - t0) / dur);
+        el.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  });
+}
+
 // Only http(s) links are allowed; "instagram.com/x" becomes "https://instagram.com/x"
 function safeUrl(u) {
   u = String(u || '').trim();
@@ -840,6 +1148,209 @@ async function importLegacyProjects() {
   return error ? 0 : rows.length;
 }
 
+// ───────────── Motion (GSAP) ─────────────
+// GSAP is used only for headings and scrolling. Taps, hovers and dialogs stay in CSS: they must
+// be instant and interruptible. If GSAP does not load (blocked network) or the person asked for
+// reduced motion, none of this runs and all content is simply visible.
+const hasGsap = () => typeof gsap !== 'undefined' && !!gsap && typeof ScrollTrigger !== 'undefined';
+const wantsMotion = () => hasGsap() && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (hasGsap()) {
+  gsap.registerPlugin(ScrollTrigger);
+  document.documentElement.classList.add('gsap-on'); // turns off the CSS-only intro, GSAP takes over
+}
+const CLEAR = 'opacity,visibility,transform,clipPath';
+const seenCards = new Set();   // a card animates once per visit, never again on re-renders or tab switches
+const seenTitles = new Set();
+let motionTriggers = [];
+let progressBar = null;
+
+const killMotion = () => { motionTriggers.forEach(t => t && t.kill()); motionTriggers = []; };
+
+// Splits a heading into words, each in a clipping box. Uses textContent only, so any text is safe.
+function splitWords(el) {
+  if (!el || el.dataset.split) return [];
+  const text = el.textContent;
+  el.setAttribute('aria-label', text); // a screen reader still reads the whole heading
+  el.textContent = '';
+  const inner = [];
+  text.split(/(\s+)/).forEach(part => {
+    if (!part) return;
+    if (/^\s+$/.test(part)) { el.appendChild(document.createTextNode(' ')); return; }
+    const box = document.createElement('span');
+    box.className = 'sw';
+    box.setAttribute('aria-hidden', 'true');
+    const word = document.createElement('span');
+    word.className = 'sw-i';
+    word.textContent = part;
+    box.appendChild(word);
+    el.appendChild(box);
+    inner.push(word);
+  });
+  el.dataset.split = '1';
+  return inner;
+}
+
+// Safety net: anything still hidden after a few seconds (page in a background tab, a failed trigger)
+function unstick(cards) {
+  cards.forEach(c => {
+    if (c.isConnected && !seenCards.has(c.dataset.key) && c.getBoundingClientRect().top < innerHeight) {
+      seenCards.add(c.dataset.key);
+      gsap.set(c, { clearProps: CLEAR });
+    }
+  });
+}
+
+// Cards rise in as they scroll into view. Order and timing vary (not a metronome), 4 at a time at most.
+function revealCards() {
+  if (!wantsMotion()) return;
+  const fresh = [...document.querySelectorAll('#list .card[data-key]')].filter(c => !seenCards.has(c.dataset.key));
+  if (!fresh.length) return;
+  gsap.set(fresh, { autoAlpha: 0, y: 48 });
+  motionTriggers.push(...ScrollTrigger.batch(fresh, {
+    start: 'top 92%',
+    once: true,
+    batchMax: 4,
+    interval: 0.1,
+    onEnter: batch => {
+      batch.forEach(c => seenCards.add(c.dataset.key));
+      gsap.to(batch, {
+        autoAlpha: 1, y: 0, duration: 0.75, ease: 'power3.out', overwrite: true,
+        stagger: { each: 0.07, ease: 'power1.in' },
+        onComplete: () => gsap.set(batch, { clearProps: CLEAR })
+      });
+    }
+  }));
+  setTimeout(() => unstick(fresh), 6000);
+}
+
+// Page titles slide up word by word, only the first time a tab is opened (tab switching is frequent)
+function revealTitles() {
+  if (!wantsMotion()) return;
+  document.querySelectorAll('.page-title, .empty h3').forEach(h => {
+    const key = h.className + ':' + h.textContent;
+    if (seenTitles.has(key)) return;
+    seenTitles.add(key);
+    const words = splitWords(h);
+    if (!words.length) return;
+    gsap.from(words, {
+      yPercent: 115, duration: 0.7, ease: 'power4.out', delay: 0.05,
+      stagger: { each: 0.06, ease: 'power1.in' },
+      onComplete: () => gsap.set(words, { clearProps: 'transform' })
+    });
+  });
+}
+
+// The intro, played once per visit. Lead (title) first, support follows and overlaps, actions last.
+function playWelcome() {
+  if (!wantsMotion()) return;
+  const q = s => document.querySelector(s);
+  const all = s => [...document.querySelectorAll(s)];
+  const words = splitWords(q('.hero .tagline'));
+  const stat = all('.hero .stats-strip > div, .hero .fresh');
+  const actions = all('.hero .pick > *');
+  const rest = all('.hero > .note, .hero > .ticker');
+  const targets = [q('.hero-top'), q('.hero h1'), q('.hero .title-line'), q('.hero .sub'), ...all('.hero .tile'), ...stat, ...actions, ...rest, ...words].filter(Boolean);
+  const tl = gsap.timeline({
+    defaults: { ease: 'power3.out' },
+    onComplete: () => gsap.set(targets, { clearProps: CLEAR })
+  });
+  const tiles = all('.hero .tile');
+  tl.from(tiles, {
+      autoAlpha: 0, '--ty': () => gsap.utils.random(-160, 160) + 'px', duration: 1.6, ease: 'expo.out',
+      stagger: { each: 0.09, from: 'random' }, clearProps: 'opacity,visibility'
+    }, 0)
+    .from('.hero-top', { autoAlpha: 0, y: -12, duration: 0.5 }, 0)
+    // The name is revealed right to left, the way Hebrew is read, like a curtain opening
+    .fromTo('.hero h1',
+      { clipPath: 'inset(-20% 0 -20% 100%)', y: 50 },
+      { clipPath: 'inset(-20% 0 -20% 0%)', y: 0, duration: 1.2, ease: 'power4.out' }, 0.1)
+    .from('.hero .title-line', { scaleX: 0, duration: 0.9, ease: 'power3.inOut' }, 0.7)
+    .from(words, { yPercent: 115, duration: 0.75, stagger: { each: 0.07, ease: 'power1.in' } }, 0.45)
+    .from('.hero .sub', { autoAlpha: 0, y: 14, duration: 0.6 }, 0.65)
+    .from(stat, { autoAlpha: 0, y: 18, duration: 0.55, stagger: 0.09 }, 0.8)
+    .from(actions, { autoAlpha: 0, y: 22, duration: 0.6, stagger: { each: 0.08, ease: 'power1.in' } }, 0.95)
+    .from(rest, { autoAlpha: 0, duration: 0.6 }, 1.3);
+  setTimeout(() => gsap.set(targets, { clearProps: CLEAR }), 6000);
+}
+
+// Scrolling past the opening screen: tiles move at different speeds (depth), the text drifts up
+function heroParallax() {
+  if (!document.querySelector('.hero') || !wantsMotion()) return;
+  const st = { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.6 };
+  document.querySelectorAll('.hero .tile').forEach((t, i) => {
+    motionTriggers.push(gsap.to(t, { '--py': (i % 2 ? -1 : 1) * (80 + i * 45) + 'px', ease: 'none', scrollTrigger: { ...st } }).scrollTrigger);
+  });
+  motionTriggers.push(gsap.to('.hero-main', { y: -90, autoAlpha: 0.35, ease: 'none', scrollTrigger: { ...st } }).scrollTrigger);
+}
+
+// "How it works": heading words, the line that fills as you scroll, steps slide in from the right
+function revealHow() {
+  const sec = document.querySelector('.how');
+  if (!sec || !wantsMotion()) return;
+  const hidden = [];
+  sec.querySelectorAll('.how-title').forEach(h => {
+    const words = splitWords(h);
+    hidden.push(...words);
+    motionTriggers.push(gsap.from(words, {
+      yPercent: 115, duration: 0.8, ease: 'power4.out', stagger: { each: 0.08, ease: 'power1.in' },
+      scrollTrigger: { trigger: h, start: 'top 85%', once: true },
+      onComplete: () => gsap.set(words, { clearProps: 'transform' })
+    }).scrollTrigger);
+  });
+  const steps = [...sec.querySelectorAll('.step')];
+  hidden.push(...steps);
+  steps.forEach(step => {
+    const tl = gsap.timeline({ scrollTrigger: { trigger: step, start: 'top 85%', once: true } });
+    tl.from(step, { autoAlpha: 0, x: 70, duration: 0.8, ease: 'power3.out', clearProps: CLEAR })
+      .from(step.querySelector('.step-n'), { scale: 0.5, rotation: -40, duration: 0.7, ease: 'back.out(2.2)', clearProps: 'transform' }, 0.15);
+    motionTriggers.push(tl.scrollTrigger);
+  });
+  const vertical = innerWidth <= 760;
+  motionTriggers.push(gsap.fromTo('.how .rail-fill', { [vertical ? 'scaleY' : 'scaleX']: 0 }, {
+    [vertical ? 'scaleY' : 'scaleX']: 1, ease: 'none',
+    scrollTrigger: { trigger: '.steps-wrap', start: 'top 75%', end: 'bottom 55%', scrub: 0.5 }
+  }).scrollTrigger);
+  const cta = sec.querySelector('.how-cta');
+  hidden.push(cta);
+  motionTriggers.push(gsap.from(cta, {
+    autoAlpha: 0, y: 60, duration: 0.9, ease: 'power3.out', clearProps: CLEAR,
+    scrollTrigger: { trigger: cta, start: 'top 90%', once: true }
+  }).scrollTrigger);
+  // Safety net, as with the cards
+  setTimeout(() => hidden.forEach(el => {
+    if (el.isConnected && el.getBoundingClientRect().top < innerHeight && +getComputedStyle(el).opacity < 0.1) gsap.set(el, { clearProps: CLEAR });
+  }), 6000);
+}
+
+// A thin line at the top shows how far down the page you are
+function initProgress() {
+  if (progressBar || !wantsMotion()) return;
+  progressBar = document.createElement('div');
+  progressBar.className = 'progress';
+  progressBar.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(progressBar);
+  gsap.to(progressBar, { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
+}
+
+// Called after every full screen render. Any problem here must never break the app.
+function motionAfterRender() {
+  try {
+    killMotion();
+    if (!wantsMotion()) return;
+    initProgress();
+    if (document.querySelector('.hero')) { heroParallax(); revealHow(); }
+    else { revealTitles(); revealCards(); }
+  } catch (err) {
+    console.error(err);
+    if (hasGsap()) gsap.set('#main *', { clearProps: CLEAR });
+  }
+}
+
+// After the list inside a screen changes (typing in search, filters)
+function motionAfterList() {
+  try { killMotion(); revealCards(); } catch (err) { console.error(err); }
+}
+
 let S = {
   uid: null,
   isGuest: true, // anonymous session: can browse, must continue with Google to join
@@ -855,6 +1366,11 @@ let S = {
   frame: 'all',
   medium: 'all',
   region: 'all',
+  filtersOpen: false,
+  welcomeSeen: false,
+  browsing: false,
+  joinIntent: 'creator',
+  snap: null,
   focusId: null,
   modal: null,
   editProjId: null,
@@ -1051,13 +1567,14 @@ async function adminLoad() {
 
 // Re-draw after a change from someone else, without wiping what the user is typing
 function refreshView() {
-  if (!S.user || S.onboardingType) return;
+  if ((!S.user && !isBrowsingGuest()) || S.onboardingType) return;
   const typing = document.activeElement && document.activeElement.matches('input[data-k]');
   if (typing) {
     const l = $('#list');
-    if (l) l.innerHTML = renderTabContent();
+    if (l) { l.innerHTML = renderTabContent(); motionAfterList(); }
   } else {
     $('#main').innerHTML = mainView();
+    motionAfterRender();
   }
   if (S.modal === 'chat') {
     const draft = $('#modal input[name="msg"]');
@@ -1099,7 +1616,7 @@ async function boot() {
       .subscribe();
   } catch (e) {
     console.error(e);
-    S.error = 'לא הצלחנו להתחבר לשרת. בדוק את החיבור לאינטרנט ונסה שוב.';
+    S.error = 'לא הצלחנו להתחבר לשרת. כדאי לבדוק את החיבור לאינטרנט ולנסות שוב.';
   }
   S.ready = true;
   render();
@@ -1117,7 +1634,7 @@ async function googleLogin() {
     console.error(error);
     toast(error.code === 'identity_already_exists'
       ? 'חשבון הגוגל הזה כבר מחובר לפרופיל אחר באתר'
-      : 'ההתחברות עם גוגל נכשלה. נסה שוב.');
+      : 'ההתחברות עם גוגל נכשלה. אפשר לנסות שוב.');
   }
 }
 
@@ -1137,7 +1654,7 @@ async function db(call, failMsg) {
   const { error } = await call;
   if (error) {
     console.error(error);
-    toast(failMsg || 'משהו השתבש. נסה שוב.');
+    toast(failMsg || 'משהו השתבש. אפשר לנסות שוב.');
     return false;
   }
   return true;
@@ -1191,45 +1708,91 @@ function statusScreen() {
     <div>
       <h1>קול במה</h1>
       ${S.error
-        ? `<p class="tagline">${esc(S.error)}</p><div class="row" style="margin-top:16px"><button class="btn" data-a="reload">נסה שוב</button></div>`
-        : '<p class="sub">טוען...</p>'}
+        ? `<p class="tagline">${esc(S.error)}</p><div class="row" style="margin-top:16px"><button class="btn" data-a="reload">לנסות שוב</button></div>`
+        : '<p class="sub">טוען…</p>'}
     </div>
   </div>`;
 }
 
 function welcome() {
+  const open = S.projects.filter(isOpen).length;
+  const pros = S.pros.length;
+  const matches = Object.values(S.counts).reduce((a, b) => a + b, 0);
+  const stat = (n, label) => `<div><b data-count="${n}">${n}</b><span>${label}</span></div>`;
   return `<div class="wrap hero">
-    <div style="display:flex;justify-content:space-between;align-items:center">
+    <div class="hero-stage" aria-hidden="true">
+      <i class="tile t1"></i><i class="tile t2"></i><i class="tile t3"></i><i class="tile t4"></i><i class="tile t5"></i><i class="tile t6"></i>
+    </div>
+    <div class="hero-top" data-rise style="--i:0">
       <span class="hero-badge">תיאטרון · קולנוע · פרינג׳ · סטודיו</span>
       <button class="btn ghost sm" data-a="theme">${ic(S.theme === 'dark' ? 'sun' : 'moon')} ${S.theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}</button>
     </div>
-    <div>
-      <h1>קול במה</h1>
-      <p class="tagline">מרימים הצגה או סרט? מחפשים עבודה? נפגשים כאן.</p>
-      <p class="sub">חיבור ישיר בין שחקנים, במאים ויוצרים לבין אנשי תאורה, סאונד, צילום, תלבושות, תפאורה והפקה.</p>
+    <div class="hero-main">
+      <h1 data-rise style="--i:1">קול במה</h1>
+      <i class="title-line" aria-hidden="true"></i>
+      <p class="tagline" data-rise style="--i:2">מרימים הצגה או סרט? מחפשים עבודה? נפגשים כאן.</p>
+      <p class="sub" data-rise style="--i:3">חיבור ישיר בין שחקנים, במאים ויוצרים לבין אנשי תאורה, סאונד, צילום, תלבושות, תפאורה והפקה.</p>
+      ${open + pros + matches > 0
+        ? `<div class="stats-strip" data-rise style="--i:4">${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${stat(matches, 'חיבורים שנוצרו')}</div>`
+        : `<p class="fresh" data-rise style="--i:4">${ic('sparkles')} הלוח חדש. מי שמצטרפים עכשיו מופיעים בו ראשונים.</p>`}
     </div>
     <div class="pick">
-      <button class="primary" data-a="start-onboard" data-id="creator">
+      <button class="primary" data-a="start-onboard" data-id="creator" data-rise style="--i:5">
         <span class="pi">${ic('drama')}</span>
-        <span class="txt"><b>אני מרים פרויקט</b><span>מחפש שחקנים ואנשי מקצוע להצגה או לסרט</span></span>
+        <span class="txt"><b>מרימים פרויקט</b><span>מחפשים שחקנים ואנשי מקצוע להצגה או לסרט</span></span>
         <span class="go">${ic('arrow-right')}</span>
       </button>
-      <button data-a="start-onboard" data-id="pro">
+      <button data-a="start-onboard" data-id="pro" data-rise style="--i:6">
         <span class="pi">${ic('lightbulb')}</span>
-        <span class="txt"><b>אני מחפש עבודה</b><span>שחקן, תאורן, צלם, איש סאונד, מעצב או מפיק</span></span>
+        <span class="txt"><b>מחפשים עבודה</b><span>משחק, תאורה, צילום, סאונד, עיצוב או הפקה</span></span>
         <span class="go">${ic('arrow-right')}</span>
       </button>
-      <p class="note" style="margin:0">אפשר גם וגם – הכול מאותו פרופיל. ההרשמה והכניסה דרך חשבון גוגל, בלי סיסמה חדשה.</p>
-      <div>${googleBtn('כבר רשום/ה? כניסה עם גוגל', 'btn ghost')}</div>
+      <p class="note" style="margin:0;--i:7" data-rise>אפשר גם וגם – הכול מאותו פרופיל. ההרשמה והכניסה דרך חשבון גוגל, בלי סיסמה חדשה.</p>
+      <div data-rise style="--i:7">${googleBtn('כבר רשום/ה? כניסה עם גוגל', 'btn ghost')}</div>
+      <div data-rise style="--i:8"><button type="button" class="btn ghost" data-a="browse">${ic('layout-grid')} רוצים להציץ בלוח לפני שמצטרפים?</button></div>
     </div>
     <p class="note" style="margin:0"><button type="button" class="linklike" data-a="terms">תנאי שימוש ופרטיות</button></p>
-  </div>`;
+    ${tickerHtml()}
+  </div>
+  <section class="wrap how" aria-labelledby="how-title">
+    <h2 id="how-title" class="how-title">איך זה עובד</h2>
+    <div class="steps-wrap">
+    <i class="rail" aria-hidden="true"><i class="rail-fill"></i></i>
+    <ol class="steps">
+      <li class="step">
+        <span class="step-n">1</span>
+        <div><h3>מצטרפים עם גוגל</h3><p>פרופיל אחד לכל דבר: אפשר לפרסם פרויקט וגם להגיש מועמדות. בלי סיסמה חדשה.</p></div>
+      </li>
+      <li class="step">
+        <span class="step-n">2</span>
+        <div><h3>מפרסמים או מגישים</h3><p>מעלים הצגה או סרט ומסמנים את מי מחפשים. או מגישים מועמדות לפרויקט שמתאים לך.</p></div>
+      </li>
+      <li class="step">
+        <span class="step-n">3</span>
+        <div><h3>נפגשים ויוצרים</h3><p>בעל הפרויקט מאשר, ורק אז מספר הטלפון נחשף. משם ממשיכים בוואטסאפ.</p></div>
+      </li>
+    </ol>
+    </div>
+    <div class="how-cta">
+      <h2 class="how-title">מוכנים להרים את ההפקה הבאה?</h2>
+      <div class="row">
+        <button class="btn" data-a="start-onboard" data-id="creator">${ic('drama')} מצטרפים עכשיו</button>
+        <button type="button" class="btn ghost" data-a="browse">${ic('layout-grid')} הצצה בלוח</button>
+      </div>
+    </div>
+  </section>`;
 }
+
+// Where the Supabase project physically lives (eu-central-1 = Frankfurt). Change if the project moves.
+const DATA_LOCATION = 'גרמניה (פרנקפורט), באיחוד האירופי';
+// Public contact address for privacy and accessibility requests. Empty = the line is hidden.
+// Never Guy's personal address (the site and repo are public).
+const CONTACT_EMAIL = '';
 
 function termsHtml() {
   return `<div class="terms">
     <h3>תנאי שימוש ופרטיות</h3>
-    <p class="note" style="margin-top:0">עודכן: 5.11.2026</p>
+    <p class="note" style="margin-top:0">עודכן: 7.11.2026</p>
 
     <h4>מה זה ״קול במה״</h4>
     <p>לוח מודעות קהילתי וחינמי שמחבר בין יוצרים, שחקנים ואנשי מקצוע בתיאטרון ובקולנוע. האתר רק מפגיש: הוא לא צד להסכמים בין המשתמשים, לא בודק אותם, ולא אחראי לעבודה שנעשית ביניהם. כדאי לבדוק עם מי עובדים ולסכם תנאים מראש.</p>
@@ -1242,8 +1805,19 @@ function termsHtml() {
     </ul>
     <p>מותר לנו להסיר תוכן ולחסום משתמשים שעוברים על הכללים.</p>
 
-    <h4>איזה מידע נשמר</h4>
-    <p>שם, עיר ואזור, תחומים, ניסיון, קישור לתיק עבודות, מספר טלפון, הפרויקטים שפרסמת, מועמדויות והודעות.</p>
+    <h4>מי יכול להשתמש</h4>
+    <p>מגיל 18. מתחת לגיל 18 – רק באישור של הורה.</p>
+
+    <h4>איזה מידע נשמר ולמה</h4>
+    <ul>
+      <li><b>שם, עיר, אזור, תחומים וניסיון</b> (חובה) – כדי שיוכלו למצוא אותך ולהבין מה את/ה עושה.</li>
+      <li><b>מספר טלפון</b> (חובה) – כדי שמי שאישר/ה את המועמדות שלך יוכל/תוכל ליצור קשר. חסוי עד האישור.</li>
+      <li><b>ציוד וקישור לתיק עבודות</b> (רשות) – רק אם רוצים להציג אותם.</li>
+      <li><b>כתובת המייל של חשבון הגוגל</b> – רק לכניסה לאתר. לא מוצגת לאף אחד.</li>
+      <li><b>פרויקטים, מועמדויות והודעות</b> – מה שכותבים באתר.</li>
+      <li><b>נתונים טכניים בסיסיים</b> (כמו כתובת IP) – נשמרים אוטומטית לצורכי אבטחה.</li>
+    </ul>
+    <p>אין באתר פרסומות, אין עוגיות מעקב ואין כלי סטטיסטיקה.</p>
 
     <h4>מי רואה מה</h4>
     <ul>
@@ -1253,14 +1827,24 @@ function termsHtml() {
       <li><b>הודעות</b> – רק שני האנשים בשיחה.</li>
     </ul>
 
-    <h4>איפה המידע נשמר</h4>
-    <p>בשרתים של Supabase, מחוץ לישראל. אנחנו לא מוכרים מידע, לא מעבירים אותו לאף אחד ולא מציגים פרסומות.</p>
+    <h4>איפה המידע נשמר ואיך הוא מוגן</h4>
+    <p>כמו רוב האתרים והאפליקציות בישראל, גם ״קול במה״ משתמש בשירות אחסון ענן מקצועי: <bdi>Supabase</bdi>. השרת נמצא ב${esc(DATA_LOCATION)}, אזור שהחוק הישראלי מאשר לשמור בו מידע אישי.</p>
+    <ul>
+      <li>החיבור לאתר מוצפן (https).</li>
+      <li>לכל טבלה יש כללי הרשאה במסד עצמו: כל משתמש מקבל רק את מה שמותר לו לראות.</li>
+      <li>אנחנו לא מוכרים מידע, לא מעבירים אותו לאף אחד ולא משתמשים בו לשום דבר מלבד האתר.</li>
+    </ul>
+    <p>בהרשמה את/ה מסכים/ה שהמידע יישמר בשרת הזה.</p>
 
-    <h4>מחיקה</h4>
-    <p>אפשר למחוק את החשבון בכל רגע בלשונית ״הפרופיל שלי״. המחיקה מוחקת את כל המידע שלך מהאתר.</p>
+    <h4>הזכויות שלך</h4>
+    <ul>
+      <li><b>לראות ולתקן</b> – כל הפרטים שלך מופיעים בלשונית ״הפרופיל שלי״, ואפשר לערוך אותם שם.</li>
+      <li><b>למחוק</b> – כפתור ״מחיקת חשבון״ באותה לשונית מוחק את כל המידע שלך מהאתר, מיד.</li>
+      ${CONTACT_EMAIL ? `<li><b>שאלות ובקשות</b> – <a href="mailto:${esc(CONTACT_EMAIL)}" dir="ltr">${esc(CONTACT_EMAIL)}</a>. עונים תוך 30 יום לכל היותר.</li>` : ''}
+    </ul>
 
     <h4>דיווח וחסימה</h4>
-    <p>בכל מודעה, פרופיל ושיחה יש כפתור דיווח (דגל). אפשר גם לחסום משתמש, ואז הוא לא יוכל לפנות אליך.</p>
+    <p>בכל מודעה, פרופיל ושיחה יש כפתור דיווח (דגל). אפשר גם לחסום משתמש, ואז לא תהיה לו אפשרות לפנות אליך.</p>
   </div>`;
 }
 
@@ -1275,6 +1859,7 @@ function onboarding() {
       <h2 style="font-size:28px">${editing ? 'עריכת הפרופיל שלי' : 'הצטרפות ל״קול במה״'}</h2>
       <p class="note">פרופיל אחד לכל דבר: אפשר לחפש עבודה וגם לפרסם פרויקטים.</p>
       <form data-f="onboard">
+        <div class="fs-title"><span>1</span>פרטים אישיים</div>
         <div class="grid2">
           <div>
             <label>שם מלא *</label>
@@ -1292,10 +1877,12 @@ function onboarding() {
           ${opts(REGIONS, prev.region || undefined)}
         </select>
 
-        <label>מספר טלפון (נשאר חסוי – נחשף רק לאחר אישור מועמדות) *</label>
-        <input name="phone" type="tel" required maxlength="30" value="${esc(prev.phone || '')}" placeholder="050-0000000">
+        <label for="ob-phone">מספר טלפון *</label>
+        <input id="ob-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" required maxlength="30" value="${esc(prev.phone || '')}" placeholder="050-0000000" aria-describedby="ob-phone-why">
+        <p class="note field-why" id="ob-phone-why">${ic('lock')} חסוי. נחשף רק למי שאישר/ה את המועמדות שלך, כדי שיוכלו ליצור קשר.</p>
 
-        <label>מה אתה עושה? (אפשר לבחור כמה)</label>
+        <div class="fs-title"><span>2</span>התחומים שלך</div>
+        <label>בחר/י תחום אחד או יותר</label>
         ${ROLE_GROUPS.map(([title, keys]) => `
           <div class="role-group">
             <span>${esc(title)}</span>
@@ -1308,11 +1895,12 @@ function onboarding() {
           <span><b>אני מחפש/ת עבודה</b> – הציגו אותי באינדקס אנשי המקצוע</span>
         </label>
 
-        <label>מסגרת, ציוד או כלים שאתה שולט בהם</label>
-        <input name="studioOrGear" maxlength="300" value="${esc(prev.studioOrGear || '')}" placeholder="למשל: סטודיו למשחק, grandMA, QLab, מצלמת קולנוע, תפירה...">
+        <div class="fs-title"><span>3</span>ניסיון וקישורים</div>
+        <label>מסגרת, ציוד או כלים שיש לך ניסיון איתם</label>
+        <input name="studioOrGear" maxlength="300" value="${esc(prev.studioOrGear || '')}" placeholder="למשל: סטודיו למשחק, grandMA, QLab, מצלמת קולנוע, תפירה…">
 
         <label>ניסיון קודם והפקות שהשתתפת בהן *</label>
-        <textarea name="past" rows="3" required maxlength="2000" placeholder="פרט בקצרה הצגות, סרטים, תרגילים או הפקות שלקחת בהן חלק...">${esc(prev.past || '')}</textarea>
+        <textarea name="past" rows="3" required maxlength="2000" placeholder="בקצרה: הצגות, סרטים, תרגילים או הפקות שהשתתפת בהן…">${esc(prev.past || '')}</textarea>
 
         <label>קישור לתיק עבודות / אינסטגרם / שואוריל</label>
         <input name="link" maxlength="300" value="${esc(prev.link || '')}" placeholder="https://instagram.com/...">
@@ -1320,30 +1908,36 @@ function onboarding() {
         ${!editing || !S.user.termsAccepted ? `
           <label class="check">
             <input type="checkbox" name="terms" required>
-            <span>קראתי ואני מסכים/ה ל<button type="button" class="linklike" data-a="terms">תנאי השימוש ומדיניות הפרטיות</button></span>
+            <span>קראתי ואני מסכים/ה ל<button type="button" class="linklike" data-a="terms">תנאי השימוש ומדיניות הפרטיות</button>, כולל שמירת המידע בשרת האחסון. אני בן/בת 18 ומעלה, או שיש לי אישור של הורה.</span>
           </label>
         ` : ''}
 
         <div class="row" style="margin-top:18px">
-          <button class="btn" style="width:100%">${editing ? 'שמור שינויים' : 'שמור והיכנס ל״קול במה״'}</button>
+          <button class="btn" style="width:100%">${editing ? 'שמירת השינויים' : 'שמירה וכניסה ל״קול במה״'}</button>
         </div>
       </form>
     </div>
   </div>`;
 }
 
+const PAGE_TITLES = { board: 'פרויקטים שמחפשים צוות', pros: 'אנשי מקצוע', apps: 'הודעות ומועמדויות', profile: 'הפרופיל שלי', admin: 'ניהול האתר' };
+
 function mainView() {
   const u = S.user;
+  const guest = !u; // browsing without an account: board only, nothing personal
+  if (guest && !['board', 'pros'].includes(S.tab)) S.tab = 'board';
   const pendingCount = S.apps.filter(a => a.ownerUid === S.uid && a.status === 'pending').length;
 
   return `<div class="wrap">
     <header class="top">
       <div class="brand">
-        <h2>קול במה</h2>
-        <span class="user-pill">${esc(u.name)} · ${esc(skillsLabel(u))}</span>
+        <span class="brand-name" translate="no">קול במה</span>
+        <span class="user-pill">${guest ? 'גולש/ת כאורח/ת' : `${esc(u.name)} · ${esc(skillsLabel(u))}`}</span>
       </div>
       <div class="row">
-        <button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסם פרויקט</button>
+        ${guest
+          ? `<button class="btn" data-a="join" data-id="creator">${ic('user-round')} הצטרפות</button>`
+          : `<button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסום פרויקט</button>`}
         <button class="btn ghost sm" data-a="theme" aria-label="${S.theme === 'dark' ? 'מעבר למצב בהיר' : 'מעבר למצב כהה'}">${ic(S.theme === 'dark' ? 'sun' : 'moon')}</button>
       </div>
     </header>
@@ -1357,60 +1951,75 @@ function mainView() {
       <button role="tab" aria-selected="${S.tab === 'pros'}" data-a="tab" data-id="pros">
         <span class="ti">${ic('users')}</span>
         <span class="lbl-long">אנשי מקצוע</span><span class="lbl-short">אנשי מקצוע</span>
-        <span class="chip count">${S.pros.length}</span>
+        <span class="chip count">${guest ? ic('lock') : S.pros.length}</span>
       </button>
-      <button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps" aria-label="הודעות ומועמדויות${pendingCount ? `, ${pendingCount} ממתינות לאישור` : ''}">
+      ${guest ? '' : `<button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps" aria-label="הודעות ומועמדויות${pendingCount ? `, ${pendingCount} ממתינות לאישור` : ''}">
         <span class="ti">${ic('inbox')}${pendingCount ? `<span class="badge">${pendingCount}</span>` : ''}</span>
         <span class="lbl-long">הודעות ומועמדויות</span><span class="lbl-short">הודעות</span>
       </button>
       <button role="tab" aria-selected="${S.tab === 'profile'}" data-a="tab" data-id="profile">
         <span class="ti">${ic('user-round')}</span>
         <span class="lbl-long">הפרופיל שלי</span><span class="lbl-short">פרופיל</span>
-      </button>
-      ${S.isAdmin ? `<button role="tab" aria-selected="${S.tab === 'admin'}" data-a="tab" data-id="admin">
+      </button>`}
+      ${!guest && S.isAdmin ? `<button role="tab" aria-selected="${S.tab === 'admin'}" data-a="tab" data-id="admin">
         <span class="ti">${ic('shield-check')}${S.admin.stats && S.admin.stats.open_reports ? `<span class="badge">${S.admin.stats.open_reports}</span>` : ''}</span>
         <span class="lbl-long">ניהול</span><span class="lbl-short">ניהול</span>
       </button>` : ''}
     </div>
 
+    <h1 class="page-title">${esc(PAGE_TITLES[S.tab] || '')}</h1>
+
     ${S.tab === 'board' && !S.focusId ? `
-      <div class="filters f5">
-        <input data-k="q" placeholder="חיפוש לפי שם, עיר, ציוד או תיאור..." value="${esc(S.q)}">
-        <select data-k="region">
+      <div class="searchbar">
+        <label class="srch">${ic('search')}<input data-k="q" aria-label="חיפוש" placeholder="חיפוש לפי שם, עיר, ציוד או תיאור…" value="${esc(S.q)}"></label>
+        <button type="button" class="btn ghost filter-toggle" data-a="toggle-filters" aria-expanded="${S.filtersOpen}" aria-controls="filters">${ic('sliders-horizontal')} סינון <span class="badge fbadge"${filterCount() ? '' : ' hidden'}>${filterCount()}</span></button>
+      </div>
+      <div class="filters fl4${S.filtersOpen ? ' open' : ''}" id="filters">
+        <select data-k="region" aria-label="אזור">
           <option value="all">כל האזורים</option>
           ${opts(REGIONS, S.region)}
         </select>
-        <select data-k="medium">
+        <select data-k="medium" aria-label="סוג פרויקט">
           <option value="all">במה וקולנוע</option>
           ${opts(MEDIA, S.medium)}
         </select>
-        <select data-k="role">
+        <select data-k="role" aria-label="תפקיד או תחום">
           <option value="all">כל התפקידים</option>
           ${opts(ROLES, S.role)}
         </select>
-        <select data-k="frame">
+        <select data-k="frame" aria-label="מסגרת הפקה">
           <option value="all">כל מסגרות ההפקה</option>
           ${opts(FRAMES, S.frame)}
         </select>
       </div>
     ` : ''}
-    ${S.tab === 'pros' ? `
-      <div class="filters f3">
-        <input data-k="q" placeholder="חיפוש לפי שם, עיר, ציוד או ניסיון..." value="${esc(S.q)}">
-        <select data-k="region">
+    ${S.tab === 'pros' && !guest ? `
+      <div class="searchbar">
+        <label class="srch">${ic('search')}<input data-k="q" aria-label="חיפוש" placeholder="חיפוש לפי שם, עיר, ציוד או ניסיון…" value="${esc(S.q)}"></label>
+        <button type="button" class="btn ghost filter-toggle" data-a="toggle-filters" aria-expanded="${S.filtersOpen}" aria-controls="filters">${ic('sliders-horizontal')} סינון <span class="badge fbadge"${filterCount() ? '' : ' hidden'}>${filterCount()}</span></button>
+      </div>
+      <div class="filters fl2${S.filtersOpen ? ' open' : ''}" id="filters">
+        <select data-k="region" aria-label="אזור">
           <option value="all">כל האזורים</option>
           ${opts(REGIONS, S.region)}
         </select>
-        <select data-k="role">
+        <select data-k="role" aria-label="תפקיד או תחום">
           <option value="all">כל התחומים</option>
           ${opts(ROLES, S.role)}
         </select>
       </div>
     ` : ''}
 
-    ${S.isGuest ? `<div class="note focus-bar" style="margin-bottom:16px">
+    ${guest ? `<div class="note focus-bar" style="margin-bottom:16px">
+      <span>${ic('sparkles')} את/ה גולש/ת כאורח/ת. כדי להגיש מועמדות, לשלוח הודעה או לפרסם פרויקט, צריך להצטרף עם גוגל (חינם).</span>
+      <div class="row">
+        <button class="btn sm" data-a="join" data-id="pro">הצטרפות</button>
+        <button class="btn ghost sm" data-a="leave-browse">מסך הפתיחה</button>
+      </div>
+    </div>` : ''}
+    ${S.isGuest && !guest ? `<div class="note focus-bar" style="margin-bottom:16px">
       <span>${ic('triangle-alert')} החשבון שלך עדיין לא מחובר לגוגל. חבר/י אותו כדי שלא יאבד כשמחליפים מכשיר או מנקים את הדפדפן.</span>
-      ${googleBtn('חבר לגוגל', 'btn sm')}
+      ${googleBtn('חיבור לגוגל', 'btn sm')}
     </div>` : ''}
 
     <div class="list" id="list">${renderTabContent()}</div>
@@ -1426,22 +2035,23 @@ function projectCard(p) {
     : isExpired(p)
       ? '<span class="chip">ההגשה נסגרה</span>'
       : p.stage ? `<span class="chip stage">${esc(p.stage)}</span>` : '';
-  return `<article class="card${open ? '' : ' closed'}">
+  return `<article class="card m-${medium}${open ? '' : ' closed'}" data-key="p${esc(p.id)}">
     <div class="hd">
-      <div class="row" style="justify-content:space-between">
-        <div class="row" style="gap:6px">
-          <span class="chip medium">${ic(medium === 'film' ? 'clapperboard' : 'drama')} ${esc(p.format || MEDIA[medium])}</span>
-          <span class="chip">${esc(p.frame)}</span>
-        </div>
+      <div class="hd-top">
+        <span class="kind">${ic(medium === 'film' ? 'clapperboard' : 'drama')} ${esc(p.format || MEDIA[medium])}</span>
         ${statusChip}
       </div>
       <h3>${esc(p.title)}</h3>
-      <div class="need-tags">
-        ${projRoles(p).map(r => `<span class="role-tag">דרוש: ${esc(ROLES[r] || r)}</span>`).join('')}
+      <div class="need">
+        <span class="need-lbl">מחפשים</span>
+        <div class="need-tags">
+          ${projRoles(p).map(r => `<span class="role-tag">${esc(ROLES[r] || r)}</span>`).join('')}
+        </div>
       </div>
     </div>
     <div class="bd">
       <div class="meta">
+        <span class="chip">${esc(p.frame)}</span>
         <span>${ic('user')} יוצר: <b>${esc(p.creator)}</b> ${p.studio ? `(${esc(p.studio)})` : ''}</span>
         <span>${ic('map-pin')} מיקום: <b>${esc(p.loc)}</b>${p.region ? ` (${esc(p.region)})` : ''}</span>
         <span>${ic('calendar')} לו״ז: <b>${esc(p.dates)}</b></span>
@@ -1449,19 +2059,19 @@ function projectCard(p) {
       </div>
       <div>${esc(p.desc)}</div>
       ${p.tech ? `<div class="note" style="background:var(--in);padding:8px 12px;border-radius:8px;border:1px solid var(--line)">${ic('wrench')} <b>מפרט טכני / דגשים:</b> ${esc(p.tech)}</div>` : ''}
-      <div class="row" style="margin-top:6px">
+      <div class="actions">
         ${!mine ? (hasApplied(p.id)
           ? `<span class="chip verified">${ic('check')} הגשת מועמדות</span>`
-          : open ? `<button class="btn" data-a="apply-open" data-id="${esc(p.id)}">הגש מועמדות</button>` : '') : ''}
-        ${!mine ? `<button class="btn ghost sm" data-a="chat" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}">${ic('message-circle')} שאל את היוצר</button>` : ''}
-        ${open ? `<button class="btn ghost sm" data-a="share-wa" data-id="${esc(p.id)}">${ic('share-2')} שתף בוואטסאפ</button>` : ''}
-        ${!mine ? `<button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}" aria-label="דווח על המודעה">${ic('flag')}</button>` : ''}
+          : open ? `<button class="btn" data-a="apply-open" data-id="${esc(p.id)}">הגשת מועמדות</button>` : '') : ''}
+        ${!mine ? `<button class="btn ghost sm" data-a="chat" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}">${ic('message-circle')} שאלה ליוצר/ת</button>` : ''}
+        ${open ? `<button class="btn ghost sm" data-a="share-wa" data-id="${esc(p.id)}">${ic('share-2')} שיתוף בוואטסאפ</button>` : ''}
+        ${!mine ? `<button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}" aria-label="דיווח על המודעה">${ic('flag')}</button>` : ''}
         ${mine ? `
           ${p.status === 'filled'
-            ? `<button class="btn ghost sm" data-a="toggle-filled" data-id="${esc(p.id)}">${ic('rotate-ccw')} פתח מחדש</button>`
+            ? `<button class="btn ghost sm" data-a="toggle-filled" data-id="${esc(p.id)}">${ic('rotate-ccw')} פתיחה מחדש</button>`
             : `<button class="btn ok sm" data-a="toggle-filled" data-id="${esc(p.id)}">${ic('circle-check')} מצאנו, תודה!</button>`}
-          <button class="btn ghost sm" data-a="edit-proj" data-id="${esc(p.id)}">${ic('pencil')} ערוך</button>
-          <button class="btn ghost sm" data-a="del" data-id="${esc(p.id)}">${ic('trash-2')} מחק</button>
+          <button class="btn ghost sm" data-a="edit-proj" data-id="${esc(p.id)}">${ic('pencil')} עריכה</button>
+          <button class="btn ghost sm" data-a="del" data-id="${esc(p.id)}">${ic('trash-2')} מחיקה</button>
         ` : ''}
       </div>
     </div>
@@ -1477,7 +2087,7 @@ function renderTabContent() {
       const p = S.projects.find(x => String(x.id) === S.focusId);
       return `<div class="note focus-bar">
           <span>${p ? 'מוצגת הפקה אחת מקישור ששותף.' : 'ההפקה מהקישור לא נמצאה. ייתכן שנמחקה.'}</span>
-          <button class="btn ghost sm" data-a="unfocus">הצג את כל הפרויקטים</button>
+          <button class="btn ghost sm" data-a="unfocus">כל הפרויקטים</button>
         </div>${p ? projectCard(p) : ''}`;
     }
 
@@ -1493,8 +2103,8 @@ function renderTabContent() {
       return `<div class="empty">
         <span class="empty-ic">${ic(S.projects.length ? 'search' : 'drama')}</span>
         <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">${S.projects.length ? 'אין פרויקטים שמתאימים לחיפוש' : 'לוח הפרויקטים נקי'}</h3>
-        <p style="margin:0 0 16px">${S.projects.length ? 'נסה לשנות את הסינון.' : 'עדיין אין הפקות רשומות בלוח. היה הראשון לפרסם הצגה או סרט ולגייס צוות.'}</p>
-        <button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסם פרויקט</button>
+        <p style="margin:0 0 16px">${S.projects.length ? 'אפשר לשנות את הסינון.' : 'עדיין אין הפקות רשומות בלוח. אפשר להיות הראשונים לפרסם הצגה או סרט ולגייס צוות.'}</p>
+        <button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסום פרויקט</button>
       </div>`;
     }
 
@@ -1502,6 +2112,14 @@ function renderTabContent() {
   }
 
   if (S.tab === 'pros') {
+    if (!S.user) {
+      return `<div class="empty">
+        <span class="empty-ic">${ic('lock')}</span>
+        <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">אנשי המקצוע גלויים לחברים</h3>
+        <p style="margin:0 0 16px">הצטרפו עם גוגל (חינם) כדי לראות פרופילים וליצור קשר.</p>
+        <button class="btn" data-a="join" data-id="pro">${ic('user-round')} הצטרפות עם גוגל</button>
+      </div>`;
+    }
     const arr = S.pros.filter(p => hit(p.name, p.loc, p.region, p.past, p.studioOrGear)
       && (S.role === 'all' || skillsOf(p).includes(S.role))
       && (S.region === 'all' || p.region === S.region));
@@ -1510,19 +2128,22 @@ function renderTabContent() {
         <span class="empty-ic">${ic('users')}</span>
         <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">אין כרגע פרופילים להצגה</h3>
         <p style="margin:0 0 16px">מי שמסמן בפרופיל ״אני מחפש/ת עבודה״ מופיע כאן עם הניסיון והציוד שלו.</p>
-        ${!S.user.seeking ? `<button class="btn" data-a="edit-profile">+ הוסף את עצמי לאינדקס</button>` : ''}
+        ${!S.user.seeking ? `<button class="btn" data-a="edit-profile">+ הוספה שלי לאינדקס</button>` : ''}
       </div>`;
     }
     return arr.map(p => {
       const mine = isMine(p);
       const link = linkHtml(p.link, ic('link') + ' צפייה בתיק עבודות / אינסטגרם');
-      return `<article class="card">
+      return `<article class="card m-person" data-key="u${esc(p.id)}">
         <div class="hd">
-          <div class="row" style="justify-content:space-between">
-            <div class="need-tags" style="margin:0">${skillsOf(p).map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>
-            <span class="chip verified">${ic('check')} ${p.completed || 0} הפקות ב״קול במה״</span>
+          <div class="who">
+            ${avatar(p.name, 56)}
+            <div class="who-txt">
+              <h3>${esc(p.name)}</h3>
+              <span class="chip verified">${ic('check')} ${p.completed || 0} הפקות ב״קול במה״</span>
+            </div>
           </div>
-          <h3>${esc(p.name)}</h3>
+          <div class="need-tags">${skillsOf(p).map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>
         </div>
         <div class="bd">
           <div class="meta">
@@ -1533,9 +2154,9 @@ function renderTabContent() {
           ${link ? `<div>${link}</div>` : ''}
           <div class="row" style="margin-top:6px">
             ${mine
-              ? `<button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} ערוך את הפרופיל שלי</button>`
-              : `<button class="btn" data-a="chat" data-other="${esc(p.uid)}" data-proj="">${ic('message-circle')} שלח הודעה</button>
-                 <button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="" aria-label="דווח על הפרופיל">${ic('flag')}</button>`}
+              ? `<button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} עריכת הפרופיל שלי</button>`
+              : `<button class="btn" data-a="chat" data-other="${esc(p.uid)}" data-proj="">${ic('message-circle')} שליחת הודעה</button>
+                 <button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="" aria-label="דיווח על הפרופיל">${ic('flag')}</button>`}
           </div>
         </div>
       </article>`;
@@ -1629,7 +2250,7 @@ function renderTabContent() {
 
       <div class="row" style="justify-content:space-between">
         <h3 class="section-title">${ic('flag')} דיווחים ${st.open_reports ? `<span class="badge">${st.open_reports}</span>` : ''}</h3>
-        <button class="btn ghost sm" data-a="admin-toggle-handled">${S.admin.showHandled ? 'הסתר דיווחים שטופלו' : 'הצג גם דיווחים שטופלו'}</button>
+        <button class="btn ghost sm" data-a="admin-toggle-handled">${S.admin.showHandled ? 'הסתרת דיווחים שטופלו' : 'הצגת דיווחים שטופלו'}</button>
       </div>
       ${reports.length ? reports.map(r => `<article class="card"${r.handled ? ' style="opacity:.6"' : ''}><div class="bd">
         <div class="row" style="justify-content:space-between">
@@ -1656,7 +2277,7 @@ function renderTabContent() {
           <span class="note">· ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · נרשם/ה ${esc(day(u.created_at))}${u.seeking ? ' · באינדקס' : ''}</span>
           ${u.skills.length ? `<div class="note" style="margin:2px 0 0">${esc(u.skills.map(s => ROLES[s] || s).join(' · '))}</div>` : ''}
         </span>
-        ${u.id === S.uid ? '<span class="chip verified">זה את/ה</span>' : `<button class="btn ghost sm" data-a="admin-del-user" data-id="${esc(u.id)}">${ic('ban')} מחק</button>`}
+        ${u.id === S.uid ? '<span class="chip verified">זה את/ה</span>' : `<button class="btn ghost sm" data-a="admin-del-user" data-id="${esc(u.id)}">${ic('ban')} מחיקה</button>`}
       </div>`).join('')}
 
       <h3 class="section-title">${ic('drama')} פרויקטים (${S.projects.length})</h3>
@@ -1666,8 +2287,8 @@ function renderTabContent() {
           <span class="note">· ${esc(p.creator)} · ${esc(p.format || MEDIA[p.medium || 'theater'])}${isOpen(p) ? '' : ' · סגור'}</span>
         </span>
         <span class="row">
-          ${p.status !== 'filled' ? `<button class="btn ghost sm" data-a="admin-close-proj" data-id="${esc(p.id)}">סגור</button>` : ''}
-          <button class="btn ghost sm" data-a="admin-del-proj" data-id="${esc(p.id)}">${ic('trash-2')} מחק</button>
+          ${p.status !== 'filled' ? `<button class="btn ghost sm" data-a="admin-close-proj" data-id="${esc(p.id)}">סגירה</button>` : ''}
+          <button class="btn ghost sm" data-a="admin-del-proj" data-id="${esc(p.id)}">${ic('trash-2')} מחיקה</button>
         </span>
       </div>`).join('') : '<div class="empty" style="padding:20px">אין פרויקטים עדיין</div>'}
     `;
@@ -1678,12 +2299,12 @@ function renderTabContent() {
     const skills = skillsOf(u);
     const link = linkHtml(u.link, ic('link') + ' ' + esc(u.link));
     return `<div class="list">
-      <div class="card" style="padding:24px">
-        <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <div class="card m-person" style="padding:24px">
+        <div class="row" style="justify-content:space-between;margin-bottom:16px">
           ${u.seeking ? `<span class="chip verified">${ic('check')} מחפש/ת עבודה – מופיע/ה באינדקס</span>` : '<span class="chip">לא מופיע/ה באינדקס אנשי המקצוע</span>'}
-          <button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} ערוך פרופיל</button>
+          <button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} עריכת הפרופיל</button>
         </div>
-        <h3 style="font-size:28px">${esc(u.name)}</h3>
+        <div class="who">${avatar(u.name, 72)}<h3 style="font-size:30px;margin:0">${esc(u.name)}</h3></div>
         ${skills.length ? `<div class="need-tags">${skills.map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>` : ''}
         <p class="meta" style="margin:10px 0 14px">${ic('map-pin')} ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · ${ic('lock')} טלפון לאישור: ${esc(u.phone || 'לא הוזן')}</p>
         ${u.studioOrGear ? `<p><b>מסגרת / ציוד וכלים:</b> ${esc(u.studioOrGear)}</p>` : ''}
@@ -1695,10 +2316,10 @@ function renderTabContent() {
         <h4 style="font-size:18px;margin-bottom:6px">${ic('key-round')} החשבון שלך</h4>
         ${S.isGuest ? `
           <p class="note" style="margin:0 0 10px">החשבון שמור כרגע רק בדפדפן הזה. חבר/י אותו לגוגל, ואז אפשר להיכנס מכל מכשיר.</p>
-          ${googleBtn('חבר לגוגל', 'btn sm')}
+          ${googleBtn('חיבור לגוגל', 'btn sm')}
         ` : `
           <p class="note" style="margin:0 0 10px">${ic('circle-check')} מחובר/ת עם חשבון גוגל. אפשר להיכנס מכל מכשיר.</p>
-          <button class="btn ghost sm" data-a="logout">התנתק</button>
+          <button class="btn ghost sm" data-a="logout">יציאה מהחשבון</button>
         `}
       </div>
 
@@ -1733,6 +2354,7 @@ function modalView() {
     h = `<h3>${editing ? 'עריכת פרויקט קיים' : 'פרסום פרויקט חדש'}</h3>
       <p class="note">מלא את פרטי ההפקה כדי ששחקנים ואנשי מקצוע מתאימים יוכלו להגיש מועמדות.</p>
       <form data-f="proj">
+        <div class="fs-title"><span>1</span>הפרויקט</div>
         <label>שם ההפקה, המחזה או הסרט *</label>
         <input name="title" required maxlength="120" value="${esc(editing ? editing.title : '')}" placeholder="למשל: העלמה והמוות / סרט גמר">
 
@@ -1758,9 +2380,11 @@ function modalView() {
           </div>
         </div>
 
-        <label>את מי אתם מחפשים? (אפשר לסמן כמה) *</label>
+        <div class="fs-title"><span>2</span>את מי מחפשים</div>
+        <label>אפשר לסמן כמה תפקידים *</label>
         <div class="role-picker" id="role-picker">${pills(MEDIA_ROLES[medium], sel)}</div>
 
+        <div class="fs-title"><span>3</span>מיקום ולוח זמנים</div>
         <div class="grid2">
           <div>
             <label>עיר / מיקום *</label>
@@ -1786,14 +2410,15 @@ function modalView() {
           </div>
         </div>
 
+        <div class="fs-title"><span>4</span>תיאור</div>
         <label>תיאור הפרויקט והאווירה האמנותית *</label>
-        <textarea name="desc" rows="3" required maxlength="3000" placeholder="ספר בקצרה על המחזה או הסרט, סגנון העבודה ומה אתם מחפשים...">${esc(editing ? editing.desc : '')}</textarea>
+        <textarea name="desc" rows="3" required maxlength="3000" placeholder="ספר בקצרה על המחזה או הסרט, סגנון העבודה ומה אתם מחפשים…">${esc(editing ? editing.desc : '')}</textarea>
 
         <label>מפרט טכני / דגשים לאולם או ללוקיישן (רשות)</label>
-        <input name="tech" maxlength="500" value="${esc(editing ? editing.tech : '')}" placeholder="למשל: grandMA dot2 באולם / צילומי לילה בחוץ...">
+        <input name="tech" maxlength="500" value="${esc(editing ? editing.tech : '')}" placeholder="למשל: grandMA dot2 באולם / צילומי לילה בחוץ…">
 
         <div class="row" style="margin-top:16px">
-          <button class="btn">${editing ? 'שמור שינויים' : 'פרסם פרויקט בלוח'}</button>
+          <button class="btn">${editing ? 'שמירת השינויים' : 'פרסום הפרויקט בלוח'}</button>
           <button type="button" class="btn ghost" data-a="close">ביטול</button>
         </div>
       </form>`;
@@ -1804,12 +2429,12 @@ function modalView() {
     h = `<h3>הגשת מועמדות: ${esc(p ? p.title : '')}</h3>
       <p class="note">היוצר יקבל את הפרופיל שלך (${esc(S.user.name)}), הניסיון והקישור שלך. מספר הטלפון שלך ייחשף רק אם המועמדות תאושר.</p>
       <form data-f="apply">
-        <label>לאיזה תפקיד אתה פונה?</label>
+        <label>לאיזה תפקיד הפנייה?</label>
         <select name="role">${rolesArr.map(r => `<option value="${esc(r)}"${r === mySkill ? ' selected' : ''}>${esc(ROLES[r] || r)}</option>`).join('')}</select>
         <label>הודעה קצרה ליוצר *</label>
-        <textarea name="note" rows="3" required maxlength="1000" placeholder="היי! ראיתי את הפרויקט שלכם, אני זמין בתאריכים האלו ויש לי ניסיון מתאים..."></textarea>
+        <textarea name="note" rows="3" required maxlength="1000" placeholder="היי! ראיתי את הפרויקט שלכם, אני זמין בתאריכים האלו ויש לי ניסיון מתאים…"></textarea>
         <div class="row" style="margin-top:16px">
-          <button class="btn">שלח מועמדות לאישור</button>
+          <button class="btn">שליחת המועמדות לאישור</button>
           <button type="button" class="btn ghost" data-a="close">ביטול</button>
         </div>
       </form>`;
@@ -1824,8 +2449,8 @@ function modalView() {
           <div style="color:var(--gold);font-weight:700;font-size:13px">${esc(proj ? proj.title : skillsOf(other).map(s => ROLES[s] || s).join(' · '))}</div>
         </div>
         <div class="row">
-          <button class="btn ghost sm" data-a="report" data-other="${esc(c.otherId)}" data-proj="${esc(c.projId || '')}">${ic('flag')} דווח / חסום</button>
-          <button class="btn ghost sm" data-a="close" aria-label="סגור">✕</button>
+          <button class="btn ghost sm" data-a="report" data-other="${esc(c.otherId)}" data-proj="${esc(c.projId || '')}">${ic('flag')} דיווח / חסימה</button>
+          <button class="btn ghost sm" data-a="close" aria-label="סגירה">✕</button>
         </div>
       </div>
       <div class="msgs" id="msgs">
@@ -1835,8 +2460,8 @@ function modalView() {
           </div>`).join('') : '<div class="note" style="text-align:center;margin:auto">עדיין אין הודעות בשיחה זו. רק שניכם רואים אותה.</div>'}
       </div>
       <form data-f="chat" class="row" style="flex-wrap:nowrap">
-        <input name="msg" autocomplete="off" maxlength="1000" placeholder="כתוב הודעה...">
-        <button class="btn">שלח</button>
+        <input name="msg" autocomplete="off" maxlength="1000" placeholder="כתיבת הודעה…">
+        <button class="btn">שליחה</button>
       </form>`;
   } else if (m === 'report') {
     const name = nameOf(S.report.userId);
@@ -1846,23 +2471,31 @@ function modalView() {
         <label>מה הבעיה? *</label>
         <select name="reason" required>${opts(REPORT_REASONS)}</select>
         <label>פרטים (רשות)</label>
-        <textarea name="details" rows="3" maxlength="1000" placeholder="ספר/י בקצרה מה קרה..."></textarea>
+        <textarea name="details" rows="3" maxlength="1000" placeholder="ספר/י בקצרה מה קרה…"></textarea>
         <label class="check">
           <input type="checkbox" name="block">
           <span><b>חסום/חסמי את ${esc(name)}</b> – לא תראה/י יותר את המודעות וההודעות שלו/ה, והוא/היא לא יוכל/תוכל לפנות אליך.</span>
         </label>
         <div class="row" style="margin-top:16px">
-          <button class="btn">שלח דיווח</button>
+          <button class="btn">שליחת הדיווח</button>
           <button type="button" class="btn ghost" data-a="close">ביטול</button>
         </div>
       </form>`;
+  } else if (m === 'join') {
+    h = `<h3>כדי להמשיך צריך להצטרף</h3>
+      <p>ההצטרפות חינמית ודרך חשבון גוגל, בלי סיסמה חדשה. אחרי זה אפשר להגיש מועמדות, לפרסם פרויקטים ולשלוח הודעות.</p>
+      <div class="row" style="margin-top:18px">
+        ${googleBtn('המשך עם גוגל', 'btn')}
+        <button type="button" class="btn ghost" data-a="close">אולי אחר כך</button>
+      </div>
+      <p class="note">${ic('lock')} הפרופיל והטלפון שלך לא נחשפים בלי הסכמה, כמו שכתוב בתנאי השימוש.</p>`;
   } else if (m === 'terms') {
     h = termsHtml() + `<div class="row" style="margin-top:16px"><button class="btn" data-a="close">הבנתי</button></div>`;
   } else if (m === 'confirm') {
     h = `<h3>רגע, בטוח?</h3>
       <p>${esc(S.confirm.text)}</p>
       <div class="row" style="margin-top:16px">
-        <button class="btn" data-a="confirm-yes">כן, מחק</button>
+        <button class="btn" data-a="confirm-yes">כן, למחוק</button>
         <button class="btn ghost" data-a="close">ביטול</button>
       </div>`;
   }
@@ -1873,10 +2506,27 @@ function modalView() {
 function render() {
   if (!S.ready || S.error) {
     $('#main').innerHTML = statusScreen();
+  } else if (isBrowsingGuest() && !S.onboardingType) {
+    $('#main').innerHTML = mainView();
+    motionAfterRender();
   } else if (!S.user || S.onboardingType === 'edit') {
-    $('#main').innerHTML = S.onboardingType ? onboarding() : welcome();
+    const showWelcome = !S.onboardingType;
+    $('#main').innerHTML = showWelcome ? welcome() : onboarding();
+    if (showWelcome) {
+      // The intro plays once. After that (theme switch, coming back) everything shows at once.
+      if (S.welcomeSeen) document.documentElement.classList.add('anim-off');
+      else {
+        S.welcomeSeen = true;
+        // Safety net: if the animation never runs (background tab), show everything after 3.5s
+        setTimeout(() => document.documentElement.classList.add('anim-off'), 3500);
+        animateCounts();
+        playWelcome();
+      }
+      motionAfterRender();
+    }
   } else {
     $('#main').innerHTML = mainView();
+    motionAfterRender();
   }
   renderModal();
 }
@@ -1885,6 +2535,31 @@ function renderModal() {
   $('#modal').innerHTML = modalView();
   const m = $('#msgs');
   if (m) m.scrollTop = m.scrollHeight;
+  // Remember the untouched form, so we can tell later whether the person typed anything
+  const f = FORM_MODALS.includes(S.modal) ? $('.dlg form[data-f]') : null;
+  S.snap = f ? formSnap(f) : null;
+}
+
+// Closing a form dialog (tap outside, Escape, X, Cancel): if something was typed, ask first
+function requestClose() {
+  if (FORM_MODALS.includes(S.modal) && formDirty()) {
+    if (!$('.discard')) {
+      const d = document.createElement('div');
+      d.className = 'discard';
+      d.setAttribute('role', 'alert');
+      d.innerHTML = `<span>יש כאן שינויים שלא נשמרו. לסגור ולמחוק אותם?</span>
+        <div class="row">
+          <button type="button" class="btn sm" data-a="keep-editing">להמשיך לערוך</button>
+          <button type="button" class="btn ghost sm" data-a="discard">לסגור בלי לשמור</button>
+        </div>`;
+      const dlg = $('.dlg');
+      dlg.prepend(d);
+      dlg.scrollTop = 0;
+      d.querySelector('[data-a=keep-editing]').focus();
+    }
+    return;
+  }
+  closeModal();
 }
 
 function closeModal() {
@@ -1904,8 +2579,40 @@ document.addEventListener('click', async e => {
   const a = el.dataset.a, id = el.dataset.id;
 
   if (a === 'ovl' && e.target !== el) return;
+
+  // A visitor without a profile gets a friendly "join first" window instead of personal actions
+  const needsAccount = { open: 'creator', 'apply-open': 'pro', chat: 'pro', report: 'pro' };
+  if (!S.user && needsAccount[a]) {
+    S.joinIntent = needsAccount[a];
+    S.modal = 'join';
+    renderModal();
+    return;
+  }
+
   if (a === 'reload') {
     location.reload();
+  } else if (a === 'join') {
+    S.joinIntent = id || 'creator';
+    S.modal = 'join';
+    renderModal();
+  } else if (a === 'browse') {
+    S.browsing = true;
+    S.tab = 'board';
+    render();
+    window.scrollTo(0, 0);
+  } else if (a === 'leave-browse') {
+    S.browsing = false;
+    S.focusId = null;
+    history.replaceState(null, '', location.pathname + location.search);
+    render();
+    window.scrollTo(0, 0);
+  } else if (a === 'keep-editing') {
+    const d = $('.discard');
+    if (d) d.remove();
+    const first = $('.dlg form input, .dlg form textarea, .dlg form select');
+    if (first) first.focus();
+  } else if (a === 'discard') {
+    closeModal();
   } else if (a === 'theme') {
     S.theme = S.theme === 'dark' ? 'light' : 'dark';
     save('kb_theme', S.theme);
@@ -1928,7 +2635,14 @@ document.addEventListener('click', async e => {
     await installPrompt.userChoice.catch(() => {});
     installPrompt = null;
     render();
+  } else if (a === 'toggle-filters') {
+    S.filtersOpen = !S.filtersOpen;
+    const box = $('#filters');
+    if (box) box.classList.toggle('open', S.filtersOpen);
+    el.setAttribute('aria-expanded', S.filtersOpen);
   } else if (a === 'google') {
+    // Remember which path the person was on (creator / pro), for the sign-up form after Google
+    if (!S.user && S.joinIntent) sessionStorage.setItem('kb_intent', S.joinIntent);
     el.disabled = true;
     await googleLogin();
     el.disabled = false;
@@ -1977,6 +2691,7 @@ document.addEventListener('click', async e => {
   } else if (a === 'unfocus') {
     history.replaceState(null, '', location.pathname + location.search);
     S.focusId = null;
+    if (!S.user) S.browsing = true; // a visitor who opened a shared link continues to the full board
     render();
   } else if (a === 'open') {
     S.editProjId = null;
@@ -2053,7 +2768,7 @@ document.addEventListener('click', async e => {
     render();
     if (ok) toast(approve ? 'המועמד אושר. הטלפון שלו גלוי לך עכשיו.' : 'הפנייה נדחתה');
   } else if (a === 'close' || a === 'ovl') {
-    closeModal();
+    requestClose();
   } else if (a === 'chat') {
     const otherId = el.dataset.other;
     if (!otherId || otherId === S.uid) return;
@@ -2072,7 +2787,7 @@ document.addEventListener('click', async e => {
     const c = S.confirm;
     el.disabled = true;
     if (c && c.a === 'delete-account') {
-      const ok = await db(sb.rpc('delete_my_account'), 'המחיקה נכשלה. נסה שוב.');
+      const ok = await db(sb.rpc('delete_my_account'), 'המחיקה נכשלה. אפשר לנסות שוב.');
       if (!ok) { el.disabled = false; return; }
       await sb.auth.signOut().catch(() => {});
       // Forget this browser's account and any old local data, so nothing is re-imported
@@ -2115,7 +2830,9 @@ document.addEventListener('input', e => {
   if (!k) return;
   S[k] = e.target.value;
   const l = $('#list');
-  if (l) l.innerHTML = renderTabContent();
+  if (l) { l.innerHTML = renderTabContent(); motionAfterList(); }
+  const fb = $('.fbadge');
+  if (fb) { const n = filterCount(); fb.textContent = n; fb.hidden = !n; }
 });
 
 document.addEventListener('submit', async e => {
@@ -2187,7 +2904,7 @@ document.addEventListener('submit', async e => {
     const { error } = await sb.from('applications').insert({ project_id: proj.id, role: d.role, note: d.note.trim() });
     if (error) {
       setBusy(f, false);
-      toast(error.code === '23505' ? 'כבר הגשת מועמדות לפרויקט הזה' : 'משהו השתבש. נסה שוב.');
+      toast(error.code === '23505' ? 'כבר הגשת מועמדות לפרויקט הזה' : 'משהו השתבש. אפשר לנסות שוב.');
       return;
     }
     await loadAll();
@@ -2203,7 +2920,7 @@ document.addEventListener('submit', async e => {
       project_id: r.projectId ? Number(r.projectId) : null,
       reason: d.reason,
       details: (d.details || '').trim()
-    }), 'הדיווח לא נשלח. נסה שוב.');
+    }), 'הדיווח לא נשלח. אפשר לנסות שוב.');
     if (!ok) { setBusy(f, false); return; }
     if (d.block) await db(sb.from('blocks').insert({ blocked_id: r.userId }));
     await loadAll();
@@ -2218,7 +2935,7 @@ document.addEventListener('submit', async e => {
       recipient_id: S.chat.otherId,
       project_id: S.chat.projId || null,
       body: txt
-    }), 'ההודעה לא נשלחה. נסה שוב.');
+    }), 'ההודעה לא נשלחה. אפשר לנסות שוב.');
     if (ok) await loadAll();
     renderModal();
     const i = $('#modal input[name="msg"]');
@@ -2227,7 +2944,7 @@ document.addEventListener('submit', async e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && S.modal) closeModal();
+  if (e.key === 'Escape' && S.modal) requestClose();
 });
 
 boot();
