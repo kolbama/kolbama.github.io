@@ -461,7 +461,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--mut); ma
 // Public (publishable) key – safe in the browser; Row Level Security in the database decides who sees what
 const SUPABASE_URL = 'https://tktdrelocinljiniqxwz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_JG3ulizAh7Hb1rbulTa4tw_JnO59XIT';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'pkce' } });
 
 const ROLES = {
   acting: 'שחקן/ית',
@@ -615,6 +615,8 @@ async function importLegacyProjects() {
 
 let S = {
   uid: null,
+  isGuest: true, // anonymous session: can browse, must continue with Google to join
+  googleName: '',
   ready: false,
   error: null,
   theme: load('kb_theme', 'dark'),
@@ -824,7 +826,13 @@ async function boot() {
       session = data.session;
     }
     S.uid = session.user.id;
+    S.isGuest = !!session.user.is_anonymous;
+    S.googleName = (session.user.user_metadata && session.user.user_metadata.full_name) || '';
+    // Back from Google: drop the one-time ?code=… from the address bar
+    if (location.search.includes('code=')) history.replaceState(null, '', location.pathname + location.hash);
     await loadAll();
+    // Just signed in with Google but no profile yet: go straight to the sign-up form
+    if (!S.user && !S.isGuest) S.onboardingType = sessionStorage.getItem('kb_intent') || 'creator';
     sb.channel('kol-bama')
       .on('postgres_changes', { event: '*', schema: 'public' }, scheduleReload)
       .subscribe();
@@ -835,6 +843,33 @@ async function boot() {
   S.ready = true;
   render();
 }
+
+// Guests with an existing profile link Google to the same account (keeps their data and admin rights);
+// everyone else signs in (or up) with Google directly.
+async function googleLogin() {
+  const redirectTo = location.origin + location.pathname;
+  const call = S.isGuest && S.user
+    ? sb.auth.linkIdentity({ provider: 'google', options: { redirectTo } })
+    : sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+  const { error } = await call;
+  if (error) {
+    console.error(error);
+    toast(error.code === 'identity_already_exists'
+      ? 'חשבון הגוגל הזה כבר מחובר לפרופיל אחר באתר'
+      : 'ההתחברות עם גוגל נכשלה. נסה שוב.');
+  }
+}
+
+async function logout() {
+  await sb.auth.signOut().catch(() => {});
+  sessionStorage.removeItem('kb_intent');
+  location.replace(location.pathname);
+}
+
+const googleBtn = (label, cls = 'btn') => `<button class="${cls}" data-a="google">
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+  ${label}
+</button>`;
 
 // Runs a database call; on failure shows a message and returns false
 async function db(call, failMsg) {
@@ -921,7 +956,8 @@ function welcome() {
         <b>💡 אני מחפש עבודה</b>
         <span>שחקן, תאורן, צלם, איש סאונד, מעצב או מפיק</span>
       </button>
-      <p class="note" style="margin:0">אפשר גם וגם – הכול מאותו פרופיל.</p>
+      <p class="note" style="margin:0">אפשר גם וגם – הכול מאותו פרופיל. ההרשמה והכניסה דרך חשבון גוגל, בלי סיסמה חדשה.</p>
+      <div>${googleBtn('כבר רשום/ה? כניסה עם גוגל', 'btn ghost')}</div>
     </div>
     <p class="note" style="margin:0"><button type="button" class="linklike" data-a="terms">תנאי שימוש ופרטיות</button></p>
   </div>`;
@@ -967,11 +1003,11 @@ function termsHtml() {
 
 function onboarding() {
   const editing = S.onboardingType === 'edit';
-  const prev = editing ? S.user : (legacyUser() || {});
+  const prev = editing ? S.user : (legacyUser() || { name: S.googleName });
   const seeking = editing || prev.name ? !!prev.seeking : S.onboardingType === 'pro';
   const skills = skillsOf(prev);
   return `<div class="wrap" style="max-width:560px;padding-top:24px">
-    <button class="btn ghost sm" data-a="${editing ? 'cancel-edit' : 'back-welcome'}">→ חזרה</button>
+    <button class="btn ghost sm" data-a="${editing ? 'cancel-edit' : S.isGuest ? 'back-welcome' : 'logout'}">→ חזרה</button>
     <div class="card" style="margin-top:16px;padding:24px">
       <h2 style="font-size:28px">${editing ? 'עריכת הפרופיל שלי' : 'הצטרפות ל״קול במה״'}</h2>
       <p class="note">פרופיל אחד לכל דבר: אפשר לחפש עבודה וגם לפרסם פרויקטים.</p>
@@ -1101,6 +1137,11 @@ function mainView() {
         </select>
       </div>
     ` : ''}
+
+    ${S.isGuest ? `<div class="note focus-bar" style="margin-bottom:16px">
+      <span>⚠️ החשבון שלך עדיין לא מחובר לגוגל. חבר/י אותו כדי שלא יאבד כשמחליפים מכשיר או מנקים את הדפדפן.</span>
+      ${googleBtn('חבר לגוגל', 'btn sm')}
+    </div>` : ''}
 
     <div class="list" id="list">${renderTabContent()}</div>
   </div>`;
@@ -1379,7 +1420,13 @@ function renderTabContent() {
 
       <div class="card" style="padding:20px">
         <h4 style="font-size:18px;margin-bottom:6px">🔑 החשבון שלך</h4>
-        <p class="note" style="margin:0">כרגע החשבון שמור בדפדפן הזה בלבד. אם תנקה את הדפדפן או תיכנס ממכשיר אחר, תצטרך פרופיל חדש. בקרוב: כניסה עם גוגל, כדי שהחשבון יישמר בכל מקום.</p>
+        ${S.isGuest ? `
+          <p class="note" style="margin:0 0 10px">החשבון שמור כרגע רק בדפדפן הזה. חבר/י אותו לגוגל, ואז אפשר להיכנס מכל מכשיר.</p>
+          ${googleBtn('חבר לגוגל', 'btn sm')}
+        ` : `
+          <p class="note" style="margin:0 0 10px">✓ מחובר/ת עם חשבון גוגל. אפשר להיכנס מכל מכשיר.</p>
+          <button class="btn ghost sm" data-a="logout">התנתק</button>
+        `}
       </div>
 
       <div class="card" style="padding:20px">
@@ -1590,8 +1637,22 @@ document.addEventListener('click', async e => {
     applyTheme();
     render();
   } else if (a === 'start-onboard') {
+    if (S.isGuest) {
+      // Joining needs a Google account; remember which path they picked for after the redirect
+      sessionStorage.setItem('kb_intent', id);
+      el.disabled = true;
+      await googleLogin();
+      el.disabled = false;
+      return;
+    }
     S.onboardingType = id;
     render();
+  } else if (a === 'google') {
+    el.disabled = true;
+    await googleLogin();
+    el.disabled = false;
+  } else if (a === 'logout') {
+    await logout();
   } else if (a === 'back-welcome') {
     S.onboardingType = null;
     render();
