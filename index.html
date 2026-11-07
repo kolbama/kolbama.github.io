@@ -10,6 +10,10 @@
 <meta name="apple-mobile-web-app-title" content="קול במה">
 <meta name="theme-color" content="#14070b">
 <meta name="description" content="לוח פרויקטים חינמי לתיאטרון וקולנוע: מוצאים שחקנים, תאורנים, צלמים, אנשי סאונד ועוד, או את ההפקה הבאה שלכם.">
+<link rel="canonical" href="https://kolbama.github.io/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"קול במה","alternateName":"Kol Bama","url":"https://kolbama.github.io/","inLanguage":"he","description":"לוח פרויקטים חינמי לתיאטרון וקולנוע: מוצאים שחקנים, תאורנים, צלמים, אנשי סאונד ועוד, או את ההפקה הבאה שלכם."}
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -958,6 +962,17 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
   .wrap.hero .pick { max-width: none; }
   .how { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); }
 }
+
+/* Read marks in chat: ✓ sent, ✓✓ (gold) read */
+.tick { font-size: 12px; letter-spacing: -2px; color: var(--mut); margin-inline-start: 4px; }
+.tick.read { color: var(--gold); font-weight: 700; }
+.conv-side { display: grid; justify-items: end; gap: 4px; flex: none; }
+.conv.unread b, .conv.unread .last { font-weight: 700; color: var(--tx); }
+
+/* Role buttons in forms: big enough for a finger on phones (they were 35px) */
+@media (pointer: coarse) { .role-pill { min-height: 44px; padding-block: 10px; } }
+/* Window titles get focus when a window opens; no ring for that (it isn't a button) */
+.dlg h3:focus { outline: none; }
 
 /* Initials in avatars read better in the text font */
 .avatar { font-family: 'Heebo', system-ui, sans-serif; font-weight: 600; }
@@ -1931,6 +1946,24 @@ function threadMessages(otherId, projId) {
     && String(m.project_id || '') === String(projId || ''));
 }
 
+// Messages sent to me that I haven't opened yet
+const isUnread = m => m.recipient_id === S.uid && !m.read_at;
+const unreadIn = (otherId, projId) => threadMessages(otherId, projId).filter(isUnread).length;
+const unreadTotal = () => S.messages.filter(isUnread).length;
+
+// Opening a conversation marks what the other person sent as read (they then see ✓✓)
+let markingRead = false;
+async function markThreadRead(otherId, projId) {
+  const ids = threadMessages(otherId, projId).filter(isUnread).map(m => m.id);
+  if (!ids.length || markingRead) return;
+  markingRead = true;
+  const now = new Date().toISOString();
+  S.messages.forEach(m => { if (ids.includes(m.id)) m.read_at = now; }); // update the screen right away
+  const { error } = await sb.from('messages').update({ read_at: now }).in('id', ids).is('read_at', null);
+  if (error) console.error(error);
+  markingRead = false;
+}
+
 function conversations() {
   const map = new Map();
   S.messages.forEach(m => {
@@ -2151,11 +2184,11 @@ function onboarding() {
         <div class="grid2">
           <div>
             <label>שם מלא *</label>
-            <input name="name" required maxlength="80" value="${esc(prev.name || '')}" placeholder="שם פרטי ושם משפחה">
+            <input name="name" required maxlength="80" autocomplete="name" value="${esc(prev.name || '')}" placeholder="שם פרטי ושם משפחה">
           </div>
           <div>
             <label>עיר *</label>
-            <input name="loc" required maxlength="80" value="${esc(prev.loc || '')}" placeholder="ירושלים / תל אביב">
+            <input name="loc" required maxlength="80" autocomplete="address-level2" value="${esc(prev.loc || '')}" placeholder="ירושלים / תל אביב">
           </div>
         </div>
 
@@ -2191,7 +2224,7 @@ function onboarding() {
         <textarea name="past" rows="3" required maxlength="2000" placeholder="בקצרה: הצגות, סרטים, תרגילים או הפקות שהשתתפת בהן…">${esc(prev.past || '')}</textarea>
 
         <label>קישור לתיק עבודות / אינסטגרם / שואוריל</label>
-        <input name="link" maxlength="300" value="${esc(prev.link || '')}" placeholder="https://instagram.com/...">
+        <input name="link" inputmode="url" dir="ltr" autocomplete="url" spellcheck="false" maxlength="300" value="${esc(prev.link || '')}" placeholder="https://instagram.com/...">
 
         ${!editing || !S.user.termsAccepted ? `
           <label class="check">
@@ -2214,7 +2247,8 @@ function mainView() {
   const u = S.user;
   const guest = !u; // browsing without an account: board only, nothing personal
   if (guest && !['board', 'pros'].includes(S.tab)) S.tab = 'board';
-  const pendingCount = S.apps.filter(a => a.ownerUid === S.uid && a.status === 'pending').length;
+  // The number on the "messages" tab: applications waiting for my answer + messages I haven't read
+  const pendingCount = S.apps.filter(a => a.ownerUid === S.uid && a.status === 'pending').length + (guest ? 0 : unreadTotal());
 
   return `<div class="wrap wrap-main">
     <header class="top">
@@ -2241,7 +2275,7 @@ function mainView() {
         <span class="lbl-long">אנשי מקצוע</span><span class="lbl-short">אנשי מקצוע</span>
         <span class="chip count">${guest ? ic('lock') : S.pros.length}</span>
       </button>
-      ${guest ? '' : `<button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps" aria-label="הודעות ומועמדויות${pendingCount ? `, ${pendingCount} ממתינות לאישור` : ''}">
+      ${guest ? '' : `<button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps" aria-label="הודעות ומועמדויות${pendingCount ? `, ${pendingCount} חדשות` : ''}">
         <span class="ti">${ic('inbox')}${pendingCount ? `<span class="badge">${pendingCount}</span>` : ''}</span>
         <span class="lbl-long">הודעות ומועמדויות</span><span class="lbl-short">הודעות</span>
       </button>
@@ -2457,12 +2491,16 @@ function renderTabContent() {
     const convHtml = convs.length ? `<h3 class="section-title">שיחות</h3>` + convs.map(c => {
       const proj = c.projId ? S.projects.find(p => p.id === c.projId) : null;
       const fromMe = c.last.sender_id === S.uid;
-      return `<button class="conv" data-a="chat" data-other="${esc(c.otherId)}" data-proj="${esc(c.projId || '')}">
+      const unread = unreadIn(c.otherId, c.projId);
+      return `<button class="conv${unread ? ' unread' : ''}" data-a="chat" data-other="${esc(c.otherId)}" data-proj="${esc(c.projId || '')}">
         <span style="min-width:0">
           <b>${esc(nameOf(c.otherId))}</b>${proj ? ` · <span style="color:var(--gold)">${esc(proj.title)}</span>` : ''}
           <div class="last">${fromMe ? 'את/ה: ' : ''}${esc(c.last.body)}</div>
         </span>
-        <span class="note" style="margin:0;white-space:nowrap">${esc(timeLabel(c.last.created_at))}</span>
+        <span class="conv-side">
+          <span class="note" style="margin:0;white-space:nowrap">${esc(timeLabel(c.last.created_at))}</span>
+          ${unread ? `<span class="badge" aria-label="${unread} לא נקראו">${unread}</span>` : (fromMe ? `<span class="tick${c.last.read_at ? ' read' : ''}" aria-label="${c.last.read_at ? 'נקרא' : 'נשלח'}">${c.last.read_at ? '✓✓' : '✓'}</span>` : '')}
+        </span>
       </button>`;
     }).join('') : '';
 
@@ -2770,9 +2808,13 @@ function modalView() {
           <button class="btn ghost sm" data-a="close" aria-label="סגירה">✕</button>
         </div>
       </div>
-      <div class="msgs" id="msgs">
+      <div class="msgs" id="msgs" role="log" aria-live="polite">
         ${ms.length ? ms.map(x => `<div class="m ${x.sender_id === S.uid ? 'me' : ''}">
-            <div class="m-meta">${esc(nameOf(x.sender_id))} · ${esc(timeLabel(x.created_at))}</div>
+            <div class="m-meta">${esc(nameOf(x.sender_id))} · ${esc(timeLabel(x.created_at))}${x.sender_id === S.uid
+              ? (x.read_at
+                ? ` <span class="tick read" aria-label="נקרא">✓✓</span>`
+                : ` <span class="tick" aria-label="נשלח">✓</span>`)
+              : ''}</div>
             <div>${esc(x.body)}</div>
           </div>`).join('') : '<div class="note" style="text-align:center;margin:auto">עדיין אין הודעות בשיחה זו. רק שניכם רואים אותה.</div>'}
       </div>
@@ -2839,6 +2881,8 @@ function modalView() {
 }
 
 function render() {
+  if (S.ready && !S.error) markFirstScreen();
+  queueMicrotask(() => linkLabels($('#main')));
   if (!S.ready || S.error) {
     $('#main').innerHTML = statusScreen();
   } else if (isBrowsingGuest() && !S.onboardingType) {
@@ -2868,12 +2912,60 @@ function render() {
 }
 
 function renderModal() {
+  const opening = !!S.modal && !modalInHistory;
+  const closing = !S.modal && modalInHistory;
+  if (opening) S.modalOpener = document.activeElement;
   $('#modal').innerHTML = modalView();
   const m = $('#msgs');
   if (m) m.scrollTop = m.scrollHeight;
   // Remember the untouched form, so we can tell later whether the person typed anything
   const f = FORM_MODALS.includes(S.modal) ? $('.dlg form[data-f]') : null;
   S.snap = f ? formSnap(f) : null;
+  linkLabels($('#modal'));
+  if (S.modal === 'chat' && S.chat) markThreadRead(S.chat.otherId, S.chat.projId);
+  // Screen readers: the window is named by its title, and the reader starts there.
+  // (The title gets focus, not the first field, so phones don't pop up the keyboard by surprise.)
+  const dlg = $('.dlg');
+  const title = dlg && dlg.querySelector('h3');
+  if (title) {
+    title.id = title.id || 'dlg-title';
+    title.tabIndex = -1;
+    dlg.setAttribute('aria-labelledby', title.id);
+    if (opening) title.focus({ preventScroll: true });
+  }
+  if (closing) restoreFocus();
+  syncModalHistory();
+}
+
+// After a window closes, keyboard focus goes back to the button that opened it. If the screen was
+// redrawn meanwhile, the same button (same action and id) is found again.
+function restoreFocus() {
+  const o = S.modalOpener;
+  S.modalOpener = null;
+  if (!o || o === document.body) return;
+  const key = o.dataset && o.dataset.a ? { a: o.dataset.a, id: o.dataset.id } : null;
+  const go = () => {
+    let el = o.isConnected ? o : null;
+    if (!el && key) el = [...document.querySelectorAll(`[data-a="${CSS.escape(key.a)}"]`)].find(x => x.dataset.id === key.id) || null;
+    if (el) el.focus({ preventScroll: true });
+  };
+  go();
+  setTimeout(go, 0); // once more, after any redraw that this close triggers
+}
+
+// Every visible label is tied to the field right after it, so tapping the label focuses the
+// field and screen readers read the label with it. Text on screen does not change.
+let labelSeq = 0;
+function linkLabels(root) {
+  if (!root) return;
+  root.querySelectorAll('label:not([for])').forEach(lb => {
+    if (lb.querySelector('input, select, textarea')) return; // the field is inside the label already
+    const field = lb.nextElementSibling;
+    if (!field || !field.matches('input, select, textarea')) return;
+    if (!field.id) field.id = 'f' + (++labelSeq);
+    lb.htmlFor = field.id;
+  });
+  root.querySelectorAll('input[required], select[required], textarea[required]').forEach(el => el.setAttribute('aria-required', 'true'));
 }
 
 // Closing a form dialog (tap outside, Escape, X, Cancel): if something was typed, ask first
@@ -2907,6 +2999,54 @@ function closeModal() {
   renderModal();
 }
 
+// ───────────── Back button (phone back, browser back, iPhone swipe) ─────────────
+// Each screen change adds a step to the browser history, and an open window adds one more.
+// "Back" closes the open window first (asking before throwing away typed text), then returns
+// to the previous screen, and only then leaves the site. The address bar does not change.
+const navState = () => ({ tab: S.tab, browsing: !!S.browsing, onboardingType: S.onboardingType || null });
+let modalInHistory = false, skipNextPop = false;
+
+function pushScreen() {
+  history.pushState({ kb: navState() }, '');
+}
+// The very first screen becomes the starting point of the history (called from render())
+function markFirstScreen() {
+  if (!history.state || !history.state.kb) history.replaceState({ kb: navState() }, '');
+}
+// Called by renderModal(): keep one history step for "a window is open"
+function syncModalHistory() {
+  if (S.modal && !modalInHistory) {
+    history.pushState({ kb: navState(), modal: true }, '');
+    modalInHistory = true;
+  } else if (!S.modal && modalInHistory) {
+    modalInHistory = false;
+    skipNextPop = true;
+    history.back(); // the window was closed by a button, so remove its history step quietly
+  }
+}
+window.addEventListener('popstate', e => {
+  if (skipNextPop) { skipNextPop = false; return; }
+  if (modalInHistory) {
+    modalInHistory = false;
+    if (FORM_MODALS.includes(S.modal) && formDirty()) {
+      // Typed text: stay, and ask first (same as tapping outside the window)
+      history.pushState({ kb: navState(), modal: true }, '');
+      modalInHistory = true;
+      requestClose();
+      return;
+    }
+    closeModal();
+    return;
+  }
+  const st = e.state && e.state.kb;
+  if (!st) return;
+  S.tab = st.tab;
+  S.browsing = st.browsing;
+  S.onboardingType = st.onboardingType;
+  render();
+  window.scrollTo(0, 0);
+});
+
 // ───────────── Events ─────────────
 
 document.addEventListener('click', async e => {
@@ -2934,6 +3074,7 @@ document.addEventListener('click', async e => {
   } else if (a === 'browse') {
     S.browsing = true;
     S.tab = 'board';
+    pushScreen();
     render();
     window.scrollTo(0, 0);
   } else if (a === 'leave-browse') {
@@ -2964,6 +3105,7 @@ document.addEventListener('click', async e => {
       return;
     }
     S.onboardingType = id;
+    pushScreen();
     render();
   } else if (a === 'install') {
     if (!installPrompt) return;
@@ -2989,13 +3131,16 @@ document.addEventListener('click', async e => {
     render();
   } else if (a === 'edit-profile') {
     S.onboardingType = 'edit';
+    pushScreen();
     render();
     window.scrollTo(0, 0);
   } else if (a === 'cancel-edit') {
     S.onboardingType = null;
     render();
   } else if (a === 'tab') {
+    if (S.tab === id) { window.scrollTo(0, 0); return; } // same tab: just back to the top
     S.tab = id;
+    pushScreen();
     render();
     window.scrollTo(0, 0);
     if (id === 'admin') { await adminLoad(); render(); }
@@ -3328,6 +3473,17 @@ document.addEventListener('submit', async e => {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && S.modal) requestClose();
+  // Keyboard users stay inside an open window: Tab goes around its buttons and fields
+  if (e.key === 'Tab' && S.modal) {
+    const dlg = $('.dlg');
+    if (!dlg) return;
+    const items = [...dlg.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"])')]
+      .filter(el => el.offsetParent !== null || el.matches('.vh'));
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !dlg.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !dlg.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  }
 });
 
 boot();
