@@ -963,6 +963,21 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
   .how { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); }
 }
 
+/* iPhone app: the space under the status bar used to be added to the whole page (a plain band
+   above the opening screen). Now the page runs under the status bar and only the content keeps
+   its distance, so the stage light and haze reach the very top. */
+:root { padding-top: 0; }
+.wrap { padding-top: calc(24px + env(safe-area-inset-top, 0px)); }
+
+/* Desktop: the opening screen and "how it works" run edge to edge (light, haze and ticker reach
+   both sides); only the text and buttons keep a comfortable width in the middle. */
+@media (min-width: 1100px) {
+  .wrap.hero, .how {
+    max-width: none;
+    padding-inline: max(clamp(32px, 3vw, 56px), calc((100% - 1680px) / 2));
+  }
+}
+
 /* Read marks in chat: ✓ sent, ✓✓ (gold) read */
 .tick { font-size: 12px; letter-spacing: -2px; color: var(--mut); margin-inline-start: 4px; }
 .tick.read { color: var(--gold); font-weight: 700; }
