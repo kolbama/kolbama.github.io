@@ -1,6 +1,6 @@
 // קול במה – service worker. Lets the site install as a phone app.
 // Always tries the network first, so updates show up right away; the saved copy is only an offline fallback.
-const CACHE = 'kol-bama-v1';
+const CACHE = 'kol-bama-v2'; // v2 (7.11.2026): new icons
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -18,8 +18,12 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put('./', copy));
+        // Only the home page is kept as the offline copy (never some other page under the same name)
+        const path = new URL(e.request.url).pathname;
+        if (res.ok && (path.endsWith('/') || path.endsWith('/index.html'))) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put('./', copy));
+        }
         return res;
       })
       .catch(() => caches.match('./'))
