@@ -943,8 +943,27 @@ h1, h2, h3, h4 { letter-spacing: 0; }
 html.te-on [contenteditable="true"] { outline: 1px dashed #1b7a4b; outline-offset: 2px; cursor: text; }
 html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:focus { outline: 2px solid #1b7a4b; background: rgba(27,122,75,.08); }
 
+/* Desktop layout (wide screens only; phones unchanged): the board spreads over the full width,
+   projects and people sit in 2–3 columns, and the welcome screen splits into two sides. */
+@media (min-width: 1100px) {
+  .wrap-main { max-width: 1320px; padding-inline: 32px; }
+  .list-board, .list-pros { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); align-items: start; }
+  .list-board > :not(.card), .list-pros > :not(.card) { grid-column: 1 / -1; }
+  .wrap.hero { max-width: 1320px; padding-inline: 32px; display: grid; grid-template-columns: 1.15fr .85fr; column-gap: 56px; align-items: center; }
+  .wrap.hero > :not(.hero-main):not(.pick) { grid-column: 1 / -1; }
+  .wrap.hero .pick { max-width: none; }
+  .how { max-width: 1320px; padding-inline: 32px; }
+}
+
 /* Initials in avatars read better in the text font */
 .avatar { font-family: 'Heebo', system-ui, sans-serif; font-weight: 600; }
+/* Profile photos: same circle as the initials */
+.avatar-img { object-fit: cover; background: var(--card); padding: 0; outline: 1px solid rgba(0,0,0,.08); outline-offset: -1px; }
+:root[data-theme="dark"] .avatar-img { outline-color: rgba(255,255,255,.1); }
+.photo-row { gap: 10px; align-items: center; margin: 10px 0 4px; }
+.photo-pick { cursor: pointer; position: relative; }
+.vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.photo-pick:focus-within { outline: 2px solid var(--gold); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -1103,6 +1122,7 @@ const ICONS = {
   'smartphone': '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
   'sparkles': '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
   'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  'camera': '<path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/>',
   'trash-2': '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   'triangle-alert': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   'user': '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -1117,8 +1137,50 @@ const ic = name => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focus
 // ───────────── Design v3 helpers ─────────────
 
 // Round badge with the first letter of a name (no photo upload needed)
-const avatar = (name, size = 48) =>
-  `<span class="avatar" style="--av:${size}px" aria-hidden="true">${esc([...String(name || '?').trim()][0] || '?')}</span>`;
+// A profile photo if there is one (only from our own photo storage), otherwise the first letter
+const AVATAR_PREFIX = SUPABASE_URL + '/storage/v1/object/public/avatars/';
+const avatar = (name, size = 48, url = '') => url && url.startsWith(AVATAR_PREFIX)
+  ? `<img class="avatar avatar-img" style="--av:${size}px" src="${esc(url)}" alt="" width="${size}" height="${size}" loading="lazy" decoding="async">`
+  : `<span class="avatar" style="--av:${size}px" aria-hidden="true">${esc([...String(name || '?').trim()][0] || '?')}</span>`;
+
+// Shrink the chosen picture to a 400x400 square (centre crop). Re-drawing it also drops hidden
+// data that phones store inside photos, such as the GPS location where it was taken.
+async function squarePhoto(file) {
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  const side = Math.min(bmp.width, bmp.height);
+  const c = document.createElement('canvas');
+  c.width = c.height = 400;
+  c.getContext('2d').drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, 400, 400);
+  bmp.close && bmp.close();
+  const webp = await new Promise(r => c.toBlob(r, 'image/webp', 0.85));
+  if (webp && webp.type === 'image/webp') return webp;
+  return new Promise(r => c.toBlob(r, 'image/jpeg', 0.88)); // browsers without WebP export
+}
+
+// Remove every photo file in a person's folder, except one we want to keep
+async function clearPhotos(uid, keep = '') {
+  const { data } = await sb.storage.from('avatars').list(uid);
+  const old = (data || []).map(f => `${uid}/${f.name}`).filter(p => p !== keep);
+  if (old.length) await sb.storage.from('avatars').remove(old);
+}
+
+async function uploadPhoto(file) {
+  if (!file || !/^image\//.test(file.type)) { toast('צריך לבחור קובץ תמונה'); return; }
+  if (file.size > 25 * 1024 * 1024) { toast('התמונה גדולה מדי. אפשר לבחור תמונה אחרת.'); return; }
+  toast('מעלים את התמונה…');
+  let blob;
+  try { blob = await squarePhoto(file); } catch (e) { toast('את סוג התמונה הזה לא הצלחנו לפתוח. אפשר לנסות JPG או PNG.'); return; }
+  const path = `${S.uid}/${Date.now()}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
+  const up = await sb.storage.from('avatars').upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
+  if (up.error) { console.error(up.error); toast('ההעלאה נכשלה. אפשר לנסות שוב.'); return; }
+  const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+  const ok = await db(sb.from('profiles').update({ avatar_url: url }).eq('id', S.uid), 'השמירה נכשלה. אפשר לנסות שוב.');
+  if (!ok) return;
+  await clearPhotos(S.uid, path).catch(() => {});
+  await loadAll();
+  render();
+  toast('התמונה נשמרה');
+}
 
 const filterCount = () => ['region', 'medium', 'role', 'frame'].filter(k => S[k] !== 'all').length;
 
@@ -1665,6 +1727,7 @@ function toPro(p) {
     studioOrGear: p.studio_or_gear,
     past: p.past,
     link: p.link,
+    photo: p.avatar_url || '',
     completed: S.counts[p.id] || 0
   };
 }
@@ -1689,6 +1752,7 @@ function toApp(a) {
     applicantGear: ap.studio_or_gear || '',
     applicantPast: ap.past || '',
     applicantLink: ap.link || '',
+    applicantPhoto: ap.avatar_url || '',
     status: a.status
   };
 }
@@ -1729,6 +1793,7 @@ async function loadAll() {
     studioOrGear: me.studio_or_gear,
     past: me.past,
     link: me.link,
+    photo: me.avatar_url || '',
     termsAccepted: !!me.terms_accepted_at
   } : null;
 }
@@ -2032,6 +2097,7 @@ function termsHtml() {
       <li><b>שם, עיר, אזור, תחומים וניסיון</b> (חובה) – כדי שיוכלו למצוא אותך ולהבין מה את/ה עושה.</li>
       <li><b>מספר טלפון</b> (חובה) – כדי שמי שאישר/ה את המועמדות שלך יוכל/תוכל ליצור קשר. חסוי עד האישור.</li>
       <li><b>ציוד וקישור לתיק עבודות</b> (רשות) – רק אם רוצים להציג אותם.</li>
+      <li><b>תמונת פרופיל</b> (רשות) – מוקטנת לפני השמירה, וכל מידע נסתר שבתוך התמונה (כמו המיקום שבו צולמה) נמחק. אפשר להחליף או להסיר בכל רגע.</li>
       <li><b>כתובת המייל של חשבון הגוגל</b> – רק לכניסה לאתר. לא מוצגת לאף אחד.</li>
       <li><b>פרויקטים, מועמדויות והודעות</b> – מה שכותבים באתר.</li>
       <li><b>נתונים טכניים בסיסיים</b> (כמו כתובת IP) – נשמרים אוטומטית לצורכי אבטחה.</li>
@@ -2040,7 +2106,7 @@ function termsHtml() {
 
     <h4>מי רואה מה</h4>
     <ul>
-      <li><b>הפרופיל והפרויקטים</b> – כל משתמשי האתר.</li>
+      <li><b>הפרופיל (כולל התמונה) והפרויקטים</b> – כל משתמשי האתר.</li>
       <li><b>מספר הטלפון</b> – רק את/ה, ומי שיש לו איתך מועמדות שאושרה.</li>
       <li><b>מועמדויות</b> – רק המועמד ובעל הפרויקט.</li>
       <li><b>הודעות</b> – רק שני האנשים בשיחה.</li>
@@ -2146,7 +2212,7 @@ function mainView() {
   if (guest && !['board', 'pros'].includes(S.tab)) S.tab = 'board';
   const pendingCount = S.apps.filter(a => a.ownerUid === S.uid && a.status === 'pending').length;
 
-  return `<div class="wrap">
+  return `<div class="wrap wrap-main">
     <header class="top">
       <div class="brand">
         <span class="brand-name" translate="no">קול במה</span>
@@ -2240,7 +2306,7 @@ function mainView() {
       ${googleBtn('חיבור לגוגל', 'btn sm')}
     </div>` : ''}
 
-    <div class="list" id="list">${renderTabContent()}</div>
+    <div class="list list-${esc(S.tab)}" id="list">${renderTabContent()}</div>
     ${footLinks()}
   </div>`;
 }
@@ -2356,7 +2422,7 @@ function renderTabContent() {
       return `<article class="card m-person" data-key="u${esc(p.id)}">
         <div class="hd">
           <div class="who">
-            ${avatar(p.name, 56)}
+            ${avatar(p.name, 56, p.photo)}
             <div class="who-txt">
               <h3>${esc(p.name)}</h3>
               <span class="chip verified">${ic('check')} ${p.completed || 0} הפקות ב״קול במה״</span>
@@ -2419,7 +2485,7 @@ function renderTabContent() {
             <span class="chip">${isOwner ? 'פנייה נכנסת לפרויקט שלך:' : 'מועמדות ששלחת לפרויקט:'} <b>${esc(a.projTitle)}</b></span>
             <span class="role-tag">${esc(ROLES[a.role] || a.role)}</span>
           </div>
-          <h3>${esc(a.applicantName)} <span style="font-size:14px;font-weight:400;color:var(--mut)">(${esc(a.applicantLoc)})</span></h3>
+          <div class="who">${avatar(a.applicantName, 44, a.applicantPhoto)}<h3>${esc(a.applicantName)} <span style="font-size:14px;font-weight:400;color:var(--mut)">(${esc(a.applicantLoc)})</span></h3></div>
         </div>
         <div class="bd">
           ${a.applicantGear ? `<div class="meta">${ic('sliders-horizontal')} <b>ציוד / מסגרת:</b> ${esc(a.applicantGear)}</div>` : ''}
@@ -2541,7 +2607,14 @@ function renderTabContent() {
           ${u.seeking ? `<span class="chip verified">${ic('check')} מחפש/ת עבודה – מופיע/ה באינדקס</span>` : '<span class="chip">לא מופיע/ה באינדקס אנשי המקצוע</span>'}
           <button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} עריכת הפרופיל</button>
         </div>
-        <div class="who">${avatar(u.name, 72)}<h3 style="font-size:30px;margin:0">${esc(u.name)}</h3></div>
+        <div class="who">${avatar(u.name, 72, u.photo)}<h3 style="font-size:30px;margin:0">${esc(u.name)}</h3></div>
+        <div class="row photo-row">
+          <label class="btn ghost sm photo-pick">${ic('camera')} ${u.photo ? 'החלפת התמונה' : 'הוספת תמונת פרופיל'}
+            <input type="file" accept="image/*" data-photo class="vh">
+          </label>
+          ${u.photo ? `<button type="button" class="btn ghost sm" data-a="photo-remove">${ic('trash-2')} הסרת התמונה</button>` : ''}
+          <span class="note" style="margin:0">רשות. כל המשתמשים רואים אותה.</span>
+        </div>
         ${skills.length ? `<div class="need-tags">${skills.map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>` : ''}
         <p class="meta" style="margin:10px 0 14px">${ic('map-pin')} ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · ${ic('lock')} טלפון לאישור: ${esc(u.phone || 'לא הוזן')}</p>
         ${u.studioOrGear ? `<p><b>מסגרת / ציוד וכלים:</b> ${esc(u.studioOrGear)}</p>` : ''}
@@ -2681,9 +2754,12 @@ function modalView() {
     const other = S.profiles[c.otherId] || {};
     const ms = threadMessages(c.otherId, c.projId);
     h = `<div class="row" style="justify-content:space-between">
-        <div>
-          <h3 style="margin:0">${esc(other.name || 'משתמש/ת')}</h3>
-          <div style="color:var(--gold);font-weight:700;font-size:13px">${esc(proj ? proj.title : skillsOf(other).map(s => ROLES[s] || s).join(' · '))}</div>
+        <div class="who">
+          ${avatar(other.name, 44, other.avatar_url)}
+          <div>
+            <h3 style="margin:0">${esc(other.name || 'משתמש/ת')}</h3>
+            <div style="color:var(--gold);font-weight:700;font-size:13px">${esc(proj ? proj.title : skillsOf(other).map(s => ROLES[s] || s).join(' · '))}</div>
+          </div>
         </div>
         <div class="row">
           <button class="btn ghost sm" data-a="report" data-other="${esc(c.otherId)}" data-proj="${esc(c.projId || '')}">${ic('flag')} דיווח / חסימה</button>
@@ -3053,10 +3129,18 @@ document.addEventListener('click', async e => {
     S.confirm = { a: 'del', id: p.id, text: `למחוק את "${p.title}"? גם המועמדויות וההודעות של הפרויקט יימחקו.` };
     S.modal = 'confirm';
     renderModal();
+  } else if (a === 'photo-remove') {
+    el.disabled = true;
+    const ok = await db(sb.from('profiles').update({ avatar_url: '' }).eq('id', S.uid), 'ההסרה נכשלה. אפשר לנסות שוב.');
+    if (ok) await clearPhotos(S.uid).catch(() => {});
+    await loadAll();
+    render();
+    if (ok) toast('התמונה הוסרה');
   } else if (a === 'confirm-yes') {
     const c = S.confirm;
     el.disabled = true;
     if (c && c.a === 'delete-account') {
+      await clearPhotos(S.uid).catch(() => {}); // the photo files are not removed by the database itself
       const ok = await db(sb.rpc('delete_my_account'), 'המחיקה נכשלה. אפשר לנסות שוב.');
       if (!ok) { el.disabled = false; return; }
       await sb.auth.signOut().catch(() => {});
@@ -3066,6 +3150,7 @@ document.addEventListener('click', async e => {
       return;
     }
     if (c && (c.a === 'admin-del-user' || c.a === 'admin-del-proj')) {
+      if (c.a === 'admin-del-user') await clearPhotos(c.id).catch(() => {});
       const ok = c.a === 'admin-del-user'
         ? await db(sb.rpc('admin_delete_user', { target: c.id }), 'המחיקה נכשלה')
         : await db(sb.from('projects').delete().eq('id', c.id), 'המחיקה נכשלה');
@@ -3083,6 +3168,14 @@ document.addEventListener('click', async e => {
     closeModal();
     render();
   }
+});
+
+// Profile photo chosen
+document.addEventListener('change', e => {
+  if (!e.target.matches || !e.target.matches('input[data-photo]')) return;
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (file && S.user) uploadPhoto(file);
 });
 
 // Switching theater/film in the project form swaps formats, stages and roles
