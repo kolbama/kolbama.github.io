@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bellefair&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #f6f1f3;
@@ -74,7 +74,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 h1, h2, h3, h4 {
-  font-family: 'Frank Ruhl Libre', Georgia, serif;
+  font-family: var(--font-display);
   margin: 0;
   line-height: 1.2;
 }
@@ -452,7 +452,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--mut); ma
 }
 .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-.stat b { display: block; font-size: 26px; font-family: 'Frank Ruhl Libre', Georgia, serif; color: var(--gold); }
+.stat b { display: block; font-size: 26px; font-family: var(--font-display); color: var(--gold); }
 .stat span { font-size: 13px; color: var(--mut); }
 .admin-row {
   display: flex;
@@ -735,14 +735,14 @@ header.top { padding: 4px 0 20px; margin-bottom: 20px; }
   background: linear-gradient(135deg, var(--ac), #5a0f22);
   box-shadow: 0 0 0 3px var(--gold-bg);
   color: #fff;
-  font-family: 'Frank Ruhl Libre', Georgia, serif;
+  font-family: var(--font-display);
   font-weight: 900;
   font-size: calc(var(--av, 48px) * .46);
   line-height: 1;
 }
 
 /* Form sections */
-.fs-title { display: flex; align-items: center; gap: 10px; margin: 24px 0 2px; font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: 19px; color: var(--tx); }
+.fs-title { display: flex; align-items: center; gap: 10px; margin: 24px 0 2px; font-family: var(--font-display); font-weight: 900; font-size: 19px; color: var(--tx); }
 .fs-title:first-child, form > .fs-title:first-child { margin-top: 6px; }
 .fs-title span { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--gold-bg); color: var(--gold); font: 700 13px 'Heebo', sans-serif; }
 
@@ -792,7 +792,7 @@ html.anim-off [data-rise] { animation: none; }
 @keyframes rise-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 .stats-strip { display: flex; gap: 10px; margin-top: 20px; }
 .stats-strip > div { flex: 1 1 0; max-width: 150px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.stats-strip b { display: block; font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: 32px; line-height: 1.05; color: var(--gold); }
+.stats-strip b { display: block; font-family: var(--font-display); font-weight: 900; font-size: 32px; line-height: 1.05; color: var(--gold); }
 .stats-strip span { font-size: 13px; color: var(--mut); line-height: 1.3; display: block; }
 .fresh { display: inline-flex; align-items: center; gap: 8px; margin: 18px 0 0; padding: 8px 14px; border-radius: 99px; background: var(--gold-bg); color: var(--gold); font-weight: 700; font-size: 14px; }
 .ticker { margin-inline: -16px; overflow: hidden; border-block: 1px solid var(--line); padding: 12px 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
@@ -818,11 +818,11 @@ button, [role="tab"], select { touch-action: manipulation; }
 .skip-link:focus-visible { transform: none; }
 
 /* Brand name replaces the old h2 in the header (the page now has one real h1 per screen) */
-.brand-name { font-family: 'Frank Ruhl Libre', Georgia, serif; font-size: 32px; font-weight: 900; line-height: 1.2; letter-spacing: -.5px; }
+.brand-name { font-family: var(--font-display); font-size: 32px; font-weight: 900; line-height: 1.2; letter-spacing: -.5px; }
 @media (min-width: 761px) { .brand-name { font-size: 36px; } }
 
 /* Page title: one per tab. Words are cut by an overflow box so GSAP can slide them up. */
-.page-title { font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: clamp(24px, 5vw, 32px); line-height: 1.25; margin: 4px 0 14px; text-wrap: balance; }
+.page-title { font-family: var(--font-display); font-weight: 900; font-size: clamp(24px, 5vw, 32px); line-height: 1.25; margin: 4px 0 14px; text-wrap: balance; }
 .sw { display: inline-block; overflow: hidden; vertical-align: top; padding-block: .12em; margin-block: -.12em; }
 .sw-i { display: inline-block; will-change: transform; }
 
@@ -848,6 +848,17 @@ button:active:not(:disabled), .btn:active, [role="tab"]:active { transform: scal
 .chip.stage, .ext-link, .linklike { color: var(--ac-tx); }
 .chip.stage { border-color: var(--ac-tx); }
 
+/* Opening curtain (runIntro): burgundy stage curtain in two halves, manifesto in the middle */
+html.intro-on, html.intro-on body { overflow: hidden; }
+.intro { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; cursor: pointer; overflow: hidden; }
+.intro-bg { position: absolute; inset: 0; display: block; }
+.intro-text { position: relative; z-index: 1; display: grid; gap: .08em; padding: 0 20px; text-align: center;
+  font-family: var(--font-display); font-weight: 900; font-size: clamp(40px, 10.5vw, 118px); line-height: 1; color: #fbefe4; }
+.intro-line { display: block; text-wrap: balance; }
+.intro-last { color: #f2bb52; }
+.intro-skip { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 1;
+  font-size: 13px; color: rgba(251, 239, 228, .7); letter-spacing: .02em; }
+
 /* Links at the bottom of every screen: terms, accessibility statement, contact */
 .site-foot { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: center; margin: 28px 0 8px; }
 .site-foot .linklike { min-height: 44px; padding-inline: 4px; color: var(--mut); text-decoration: underline; text-underline-offset: 3px; }
@@ -865,14 +876,14 @@ button:active:not(:disabled), .btn:active, [role="tab"]:active { transform: scal
 
 /* "How it works" section under the opening screen */
 .how { padding-block: 56px 72px; display: grid; gap: 28px; }
-.how-title { font-family: 'Frank Ruhl Libre', Georgia, serif; font-weight: 900; font-size: clamp(30px, 7vw, 46px); line-height: 1.15; text-wrap: balance; }
+.how-title { font-family: var(--font-display); font-weight: 900; font-size: clamp(30px, 7vw, 46px); line-height: 1.15; text-wrap: balance; }
 .steps-wrap { position: relative; }
 .rail { position: absolute; top: 24px; bottom: 24px; inset-inline-start: 23px; width: 3px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .rail-fill { display: block; height: 100%; background: linear-gradient(var(--gold), var(--ac)); transform-origin: top center; }
 .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
 .step { position: relative; display: flex; gap: 16px; align-items: flex-start; padding: 18px; padding-inline-start: 0; }
-.step-n { flex: none; position: relative; z-index: 1; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--card); border: 2px solid var(--gold); color: var(--gold); font: 900 22px 'Frank Ruhl Libre', Georgia, serif; font-variant-numeric: tabular-nums; }
-.step h3 { font-family: 'Frank Ruhl Libre', Georgia, serif; font-size: 22px; font-weight: 900; margin: 6px 0 4px; }
+.step-n { flex: none; position: relative; z-index: 1; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--card); border: 2px solid var(--gold); color: var(--gold); font: 400 26px var(--font-display); font-variant-numeric: tabular-nums; }
+.step h3 { font-family: var(--font-display); font-size: 22px; font-weight: 900; margin: 6px 0 4px; }
 .step p { margin: 0; color: var(--mut); line-height: 1.6; text-wrap: pretty; max-width: 46ch; }
 .how-cta { margin-top: 12px; padding: 28px 22px; border-radius: 22px; border: 1px solid var(--line); background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 14%, var(--card)), var(--card)); display: grid; gap: 18px; }
 .how-cta .how-title { font-size: clamp(24px, 5.5vw, 34px); }
@@ -888,6 +899,52 @@ button:active:not(:disabled), .btn:active, [role="tab"]:active { transform: scal
   .progress { display: none; }
   .skip-link { transition: none; }
 }
+
+/* ───── Design v3.2 (7.11.2026): elegant theatre type, stage haze, new intro ───── */
+/* Headings: Bellefair (one weight only, 400). Never let the browser fake a bold version of it. */
+:root { --font-display: 'Bellefair', 'Times New Roman', serif; }
+h1, h2, h3, h4, .brand-name, .page-title, .how-title, .step h3, .step-n, .fs-title,
+.stats-strip b, .stat b, .avatar, .intro-text { font-weight: 400; font-synthesis: none; }
+h1, h2, h3, h4 { letter-spacing: 0; }
+.hero h1 { font-size: clamp(76px, 21vw, 150px); line-height: .9; }
+.brand-name { font-size: 34px; letter-spacing: 0; }
+.page-title { font-size: clamp(30px, 6.5vw, 40px); }
+.how-title { font-size: clamp(36px, 8vw, 56px); }
+.step h3 { font-size: 27px; }
+.fs-title { font-size: 23px; }
+.stats-strip b { font-size: 38px; }
+.card h3 { font-size: 26px; line-height: 1.15; }
+.intro-text { font-size: clamp(46px, 11vw, 120px); line-height: 1.05; }
+
+/* Stage haze instead of the floating cubes: slow, soft light drifting behind the title, plus fine grain */
+.hero-stage .haze { position: absolute; display: block; border-radius: 50%; filter: blur(70px); pointer-events: none;
+  translate: 0 var(--py, 0px); animation: haze-drift var(--d, 24s) ease-in-out infinite alternate; }
+.haze.z1 { --d: 26s; width: 70vmax; height: 55vmax; top: -30%; inset-inline-end: -25%; background: color-mix(in srgb, var(--gold) 26%, transparent); }
+.haze.z2 { --d: 32s; width: 80vmax; height: 60vmax; bottom: -40%; inset-inline-start: -35%; background: color-mix(in srgb, var(--ac) 30%, transparent); }
+.haze.z3 { --d: 20s; width: 40vmax; height: 30vmax; top: 30%; inset-inline-start: 20%; background: color-mix(in srgb, var(--gold) 12%, transparent); }
+@keyframes haze-drift { from { transform: translate3d(-4%, -3%, 0) scale(1); } to { transform: translate3d(5%, 4%, 0) scale(1.12); } }
+.hero-stage .grain { position: absolute; inset: 0; opacity: .09; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+:root[data-theme="light"] .hero-stage .grain { opacity: .06; mix-blend-mode: multiply; }
+@media (prefers-reduced-motion: reduce) { .hero-stage .haze { animation: none; } }
+
+/* Local text editor (localhost only) */
+.te-bar { position: fixed; bottom: 16px; left: 16px; z-index: 300; display: grid; gap: 8px; justify-items: start; max-width: min(340px, calc(100vw - 32px)); font: 400 14px 'Heebo', sans-serif; }
+.te-toggle, .te-row button { border: 0; border-radius: 99px; padding: 10px 16px; min-height: 44px; font: 700 14px 'Heebo', sans-serif; background: #1b7a4b; color: #fff; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.te-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.te-row .te-clear { background: #6b5a55; }
+.te-panel { background: var(--card); color: var(--tx); border: 2px solid #1b7a4b; border-radius: 16px; padding: 14px; display: grid; gap: 8px; max-height: 60vh; overflow: auto; }
+.te-panel p { margin: 0; color: var(--mut); }
+.te-panel label { display: grid; gap: 4px; font-weight: 600; }
+.te-panel textarea { min-height: 64px; }
+.te-list { margin: 0; padding-inline-start: 18px; display: grid; gap: 6px; }
+.te-list s { color: var(--mut); }
+.te-empty { list-style: none; color: var(--mut); }
+html.te-on [contenteditable="true"] { outline: 1px dashed #1b7a4b; outline-offset: 2px; cursor: text; }
+html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:focus { outline: 2px solid #1b7a4b; background: rgba(27,122,75,.08); }
+
+/* Initials in avatars read better in the text font */
+.avatar { font-family: 'Heebo', system-ui, sans-serif; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -937,7 +994,7 @@ const ROLE_GROUPS = [
 ];
 
 const MEDIA = {
-  theater: 'תיאטרון / במה',
+  theater: 'תיאטרון',
   film: 'קולנוע / וידאו'
 };
 
@@ -969,22 +1026,32 @@ const FORMATS = {
   film: ['סרט קצר', 'סרט סטודנטים', 'סרט ארוך', 'קליפ', 'פרסומת', 'סדרת רשת']
 };
 
+// "–" = the second part explains the first; "/" = "or" (Hebrew punctuation, 7.11.2026)
 const FRAMES = [
-  'הפקת סטודנטים / שיתוף פעולה',
-  'הפקת פרינג׳ / החזר הוצאות ונסיעות',
-  'הפקה עצמאית / חלוקת הכנסות',
+  'הפקת סטודנטים – שיתוף פעולה',
+  'הפקת פרינג׳ – החזר הוצאות ונסיעות',
+  'הפקה עצמאית – חלוקת הכנסות',
   'הפקה בתשלום מלא'
 ];
+// Older projects in the database may still hold the "/" spelling
+const RENAMED = {
+  'הפקת סטודנטים / שיתוף פעולה': 'הפקת סטודנטים – שיתוף פעולה',
+  'הפקת פרינג׳ / החזר הוצאות ונסיעות': 'הפקת פרינג׳ – החזר הוצאות ונסיעות',
+  'הפקה עצמאית / חלוקת הכנסות': 'הפקה עצמאית – חלוקת הכנסות',
+  'שלב התכנון / קריאת מחזה': 'שלב התכנון – קריאת מחזה',
+  'פיתוח / תסריט': 'פיתוח – תסריט'
+};
+const renamed = v => RENAMED[v] || v;
 
 const STAGES = {
   theater: [
-    'שלב התכנון / קריאת מחזה',
+    'שלב התכנון – קריאת מחזה',
     'שלב החזרות',
     'לקראת עלייה לבמה',
     'SOS – דרוש מחליף/מפעיל בדחיפות'
   ],
   film: [
-    'פיתוח / תסריט',
+    'פיתוח – תסריט',
     'פרה־פרודקשן',
     'לקראת צילומים',
     'צילומים',
@@ -1255,16 +1322,13 @@ function playWelcome() {
   const stat = all('.hero .stats-strip > div, .hero .fresh');
   const actions = all('.hero .pick > *');
   const rest = all('.hero > .note, .hero > .ticker');
-  const targets = [q('.hero-top'), q('.hero h1'), q('.hero .title-line'), q('.hero .sub'), ...all('.hero .tile'), ...stat, ...actions, ...rest, ...words].filter(Boolean);
+  const targets = [q('.hero-top'), q('.hero h1'), q('.hero .title-line'), q('.hero .sub'), ...all('.hero .haze'), ...stat, ...actions, ...rest, ...words].filter(Boolean);
   const tl = gsap.timeline({
     defaults: { ease: 'power3.out' },
     onComplete: () => gsap.set(targets, { clearProps: CLEAR })
   });
-  const tiles = all('.hero .tile');
-  tl.from(tiles, {
-      autoAlpha: 0, '--ty': () => gsap.utils.random(-160, 160) + 'px', duration: 1.6, ease: 'expo.out',
-      stagger: { each: 0.09, from: 'random' }, clearProps: 'opacity,visibility'
-    }, 0)
+  // The stage haze fades up slowly, like lights warming up
+  tl.from(all('.hero .haze'), { autoAlpha: 0, duration: 2.2, ease: 'power1.out', stagger: 0.25, clearProps: 'opacity,visibility' }, 0)
     .from('.hero-top', { autoAlpha: 0, y: -12, duration: 0.5 }, 0)
     // The name is revealed right to left, the way Hebrew is read, like a curtain opening
     .fromTo('.hero h1',
@@ -1279,12 +1343,122 @@ function playWelcome() {
   setTimeout(() => gsap.set(targets, { clearProps: CLEAR }), 6000);
 }
 
-// Scrolling past the opening screen: tiles move at different speeds (depth), the text drifts up
+// Opening screen: a two-line manifesto rises word by word, then the screen opens onto the site.
+// Two styles (inspired by agencefoudre.com's intro, with our own shapes, colors and words):
+//   'name' – the words "קול במה" are cut out of a burgundy screen, and the screen rushes toward
+//            the viewer until you fly through the letters into the site.
+//   'beam' – a dark stage; a narrow spotlight beam opens from above and widens to reveal the site.
+// Preview a style with ?intro=name or ?intro=beam. Once per browser tab, only on the welcome
+// screen; never for reduced motion / without GSAP / shared links / coming back from Google
+// sign-in. A click, a tap or any key skips it, and a 7s safety timer always removes it.
+const INTRO_LINES = [
+  ['כל', 'פרויקט', 'צריך', 'צוות.'],
+  ['הצוות', 'כאן.']
+];
+const INTRO_STYLE_DEFAULT = 'name';
+function introStyle() {
+  const q = new URLSearchParams(location.search).get('intro');
+  return q === 'beam' || q === 'name' ? q : INTRO_STYLE_DEFAULT;
+}
+function introAllowed() {
+  if (/[?&]intro=/.test(location.search)) return wantsMotion(); // explicit preview link
+  try { if (sessionStorage.getItem('kb_intro')) return false; } catch (e) {}
+  if (!wantsMotion()) return false;
+  if (location.hash.startsWith('#p=') || /[?&]code=/.test(location.search)) return false;
+  return true;
+}
+function runIntro(onOpen) {
+  if (!introAllowed()) { onOpen(); return; }
+  try { sessionStorage.setItem('kb_intro', '1'); } catch (e) {}
+
+  const style = introStyle();
+  const W = innerWidth, H = innerHeight;
+  const hole = style === 'name'
+    ? `<text class="intro-name" x="${W / 2}" y="${H / 2}" text-anchor="middle" dominant-baseline="central"
+         font-family="Bellefair, serif" font-size="${Math.min(W * 0.26, 260)}" fill="#000" opacity="0">קול במה</text>`
+    : `<polygon class="intro-beam" points="" fill="#000" filter="url(#introSoft)"/>`;
+  const fill = style === 'name'
+    ? '<stop offset="0" stop-color="#8e1734"/><stop offset="1" stop-color="#4a0a1b"/>'
+    : '<stop offset="0" stop-color="#1c0a10"/><stop offset="1" stop-color="#0b0306"/>';
+
+  document.querySelectorAll('.intro').forEach(el => el.remove()); // never two at once
+  const id = 'i' + Math.random().toString(36).slice(2, 8); // unique ids for the SVG parts
+  const ov = document.createElement('div');
+  ov.className = 'intro';
+  ov.setAttribute('aria-hidden', 'true');
+  ov.innerHTML = `<svg class="intro-bg" width="100%" height="100%">
+      <defs>
+        <linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1">${fill}</linearGradient>
+        <filter id="${id}s" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${style === 'beam' ? 14 : 0}"/></filter>
+        <mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">
+          <rect width="${W}" height="${H}" fill="#fff"/>
+          ${hole.replace('url(#introSoft)', `url(#${id}s)`)}
+        </mask>
+      </defs>
+      <rect width="${W}" height="${H}" fill="url(#${id}f)" mask="url(#${id}m)"/>
+    </svg>
+    <div class="intro-text">${INTRO_LINES.map((line, i) =>
+      `<span class="intro-line${i === INTRO_LINES.length - 1 ? ' intro-last' : ''}">${line.map(w =>
+        `<span class="sw"><span class="sw-i">${esc(w)}</span></span>`).join(' ')}</span>`).join('')}</div>
+    <span class="intro-skip">לחיצה לדילוג</span>`;
+  document.body.appendChild(ov);
+  document.documentElement.classList.add('intro-on');
+
+  let opened = false, finished = false;
+  const words = ov.querySelectorAll('.sw-i');
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    ov.remove();
+    document.documentElement.classList.remove('intro-on');
+    removeEventListener('keydown', skip, true);
+  };
+
+  // The reveal, per style. Each one starts while the screen is still closed.
+  const reveal = tl => {
+    if (style === 'name') {
+      const name = ov.querySelector('.intro-name');
+      gsap.set(name, { transformOrigin: '50% 50%', scale: 0.9 });
+      // The name appears as a window onto the site, holds, then rushes toward the viewer
+      tl.to(name, { attr: { opacity: 1 }, scale: 1, duration: 0.7, ease: 'power2.out' }, 0.15)
+        .to(name, { scale: 38, duration: 1.15, ease: 'power4.in' }, '+=0.35')
+        .to(ov, { autoAlpha: 0, duration: 0.35, ease: 'power1.in' }, '-=0.35');
+    } else {
+      // Spotlight: a cone from a point above the screen, narrow at first, then wide open
+      const beam = ov.querySelector('.intro-beam');
+      const b = { top: 0, bottom: 0 };
+      const draw = () => beam.setAttribute('points',
+        `${W / 2 - b.top},-40 ${W / 2 + b.top},-40 ${W / 2 + b.bottom},${H + 40} ${W / 2 - b.bottom},${H + 40}`);
+      draw();
+      tl.to(b, { top: 14, bottom: Math.min(W * 0.22, 220), duration: 0.7, ease: 'power3.out', onUpdate: draw }, 0.15)
+        .to(b, { top: W, bottom: W * 1.4, duration: 1, ease: 'power4.inOut', onUpdate: draw }, '+=0.45');
+    }
+  };
+
+  const open = () => {
+    if (opened) return;
+    opened = true;
+    onOpen(); // the welcome animation starts behind the screen, so it plays as the screen opens
+    const tl = gsap.timeline({ onComplete: finish });
+    tl.to(ov.querySelectorAll('.intro-text, .intro-skip'), { autoAlpha: 0, duration: 0.2, ease: 'power2.in' }, 0);
+    reveal(tl);
+  };
+  const tl = gsap.timeline({ onComplete: open });
+  tl.from(words, { yPercent: 120, duration: 0.6, ease: 'power3.out', stagger: { each: 0.1, ease: 'power1.in' } }, 0.15)
+    .to(words, { yPercent: -120, duration: 0.4, ease: 'power3.in', stagger: { each: 0.03 } }, '+=0.6');
+
+  function skip() { tl.kill(); open(); }
+  ov.addEventListener('pointerdown', skip);
+  addEventListener('keydown', skip, true);
+  setTimeout(() => { open(); setTimeout(finish, 2000); }, 7000); // never stuck behind the screen
+}
+
+// Scrolling past the opening screen: the haze layers move at different speeds (depth), the text drifts up
 function heroParallax() {
   if (!document.querySelector('.hero') || !wantsMotion()) return;
   const st = { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.6 };
-  document.querySelectorAll('.hero .tile').forEach((t, i) => {
-    motionTriggers.push(gsap.to(t, { '--py': (i % 2 ? -1 : 1) * (80 + i * 45) + 'px', ease: 'none', scrollTrigger: { ...st } }).scrollTrigger);
+  document.querySelectorAll('.hero .haze').forEach((t, i) => {
+    motionTriggers.push(gsap.to(t, { '--py': (i % 2 ? -1 : 1) * (60 + i * 50) + 'px', ease: 'none', scrollTrigger: { ...st } }).scrollTrigger);
   });
   motionTriggers.push(gsap.to('.hero-main', { y: -90, autoAlpha: 0.35, ease: 'none', scrollTrigger: { ...st } }).scrollTrigger);
 }
@@ -1468,8 +1642,8 @@ function toProject(r) {
     medium: r.medium,
     format: r.format,
     roles: r.roles,
-    stage: r.stage,
-    frame: r.frame,
+    stage: renamed(r.stage),
+    frame: renamed(r.frame),
     loc: r.loc,
     region: r.region,
     dates: r.dates,
@@ -1575,6 +1749,7 @@ async function adminLoad() {
 
 // Re-draw after a change from someone else, without wiping what the user is typing
 function refreshView() {
+  if (window.__textEditOn) return; // local text-edit mode: don't redraw under Guy's cursor
   if ((!S.user && !isBrowsingGuest()) || S.onboardingType) return;
   const typing = document.activeElement && document.activeElement.matches('input[data-k]');
   if (typing) {
@@ -1729,7 +1904,7 @@ function welcome() {
   const stat = (n, label) => `<div><b data-count="${n}">${n}</b><span>${label}</span></div>`;
   return `<div class="wrap hero">
     <div class="hero-stage" aria-hidden="true">
-      <i class="tile t1"></i><i class="tile t2"></i><i class="tile t3"></i><i class="tile t4"></i><i class="tile t5"></i><i class="tile t6"></i>
+      <i class="haze z1"></i><i class="haze z2"></i><i class="haze z3"></i><i class="grain"></i>
     </div>
     <div class="hero-top" data-rise style="--i:0">
       <span class="hero-badge">תיאטרון · קולנוע · פרינג׳ · סטודיו</span>
@@ -1755,7 +1930,7 @@ function welcome() {
         <span class="txt"><b>מחפשים עבודה</b><span>משחק, תאורה, צילום, סאונד, עיצוב או הפקה</span></span>
         <span class="go">${ic('arrow-right')}</span>
       </button>
-      <p class="note" style="margin:0;--i:7" data-rise>אפשר גם וגם – הכול מאותו פרופיל. ההרשמה והכניסה דרך חשבון גוגל, בלי סיסמה חדשה.</p>
+      <p class="note" style="margin:0;--i:7" data-rise>אפשר גם וגם – הכול מאותו הפרופיל. ההרשמה והכניסה דרך חשבון גוגל, בלי סיסמה חדשה.</p>
       <div data-rise style="--i:7">${googleBtn('כבר רשום/ה? כניסה עם גוגל', 'btn ghost')}</div>
       <div data-rise style="--i:8"><button type="button" class="btn ghost" data-a="browse">${ic('layout-grid')} רוצים להציץ בלוח לפני שמצטרפים?</button></div>
     </div>
@@ -1875,7 +2050,6 @@ function termsHtml() {
     <p>כמו רוב האתרים והאפליקציות בישראל, גם ״קול במה״ משתמש בשירות אחסון ענן מקצועי: <bdi>Supabase</bdi>. השרת נמצא ב${esc(DATA_LOCATION)}, אזור שהחוק הישראלי מאשר לשמור בו מידע אישי.</p>
     <ul>
       <li>החיבור לאתר מוצפן (https).</li>
-      <li>לכל טבלה יש כללי הרשאה במסד עצמו: כל משתמש מקבל רק את מה שמותר לו לראות.</li>
       <li>אנחנו לא מוכרים מידע, לא מעבירים אותו לאף אחד ולא משתמשים בו לשום דבר מלבד האתר.</li>
     </ul>
     <p>בהרשמה את/ה מסכים/ה שהמידע יישמר בשרת הזה.</p>
@@ -2600,14 +2774,15 @@ function render() {
         S.welcomeSeen = true;
         // Safety net: if the animation never runs (background tab), show everything after 3.5s
         setTimeout(() => document.documentElement.classList.add('anim-off'), 3500);
-        animateCounts();
-        playWelcome();
+        runIntro(() => { animateCounts(); playWelcome(); });
       }
       motionAfterRender();
     }
   } else {
     $('#main').innerHTML = mainView();
     motionAfterRender();
+    // Preview link (?intro=name / ?intro=beam) also plays the intro for signed-in people, once
+    if (/[?&]intro=/.test(location.search) && !S.introPreviewed) { S.introPreviewed = true; runIntro(() => {}); }
   }
   renderModal();
 }
@@ -3059,6 +3234,91 @@ document.addEventListener('keydown', e => {
 });
 
 boot();
+
+// ───────────── Local text editor (only on localhost, never on the live site) ─────────────
+// Guy clicks "עריכת טקסט", clicks any text on the page and types. Each change is kept as
+// {before, after} in localStorage 'kb_text_edits'; Claude reads that list and applies it to the
+// source file. Nothing here changes the file or the database by itself.
+(function localTextEditor() {
+  if (!['localhost', '127.0.0.1'].includes(location.hostname)) return;
+  const KEY = 'kb_text_edits';
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } };
+  const save = list => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {} };
+  let edits = load();
+
+  const bar = document.createElement('div');
+  bar.className = 'te-bar';
+  bar.innerHTML = `<button type="button" class="te-toggle">✏️ עריכת טקסט</button>
+    <div class="te-panel" hidden>
+      <b>מצב עריכה פעיל</b>
+      <p>לוחצים על טקסט באתר ומקלידים. השינויים נשמרים כאן, ו־Claude מעביר אותם לאתר.</p>
+      <label>טקסט הכניסה (שורה לכל שורה):<textarea class="te-intro" rows="2"></textarea></label>
+      <ul class="te-list"></ul>
+      <div class="te-row"><button type="button" class="te-done">סיימתי</button><button type="button" class="te-clear">מחיקת כל השינויים</button></div>
+    </div>`;
+  document.body.appendChild(bar);
+  const panel = bar.querySelector('.te-panel');
+  const intro = bar.querySelector('.te-intro');
+  const introNow = INTRO_LINES.map(l => l.join(' ')).join('\n');
+  const introEdit = edits.find(e => e.kind === 'intro');
+  intro.value = introEdit ? introEdit.after : introNow;
+
+  const listHtml = () => {
+    bar.querySelector('.te-list').innerHTML = edits.length
+      ? edits.map(e => `<li><s>${esc(e.before)}</s><br>← ${esc(e.after)}</li>`).join('')
+      : '<li class="te-empty">עוד אין שינויים</li>';
+  };
+  const record = (before, after, kind) => {
+    const old = edits.find(e => e.before === before && e.kind === kind);
+    if (before === after) edits = edits.filter(e => e !== old);
+    else if (old) old.after = after;
+    else edits.push({ before, after, kind });
+    save(edits); listHtml();
+  };
+
+  // Text-only elements become editable (anything with child elements, form fields and cards of
+  // real projects/people from the database are left alone)
+  const editable = () => {
+    // Headings split into words for the animation go back to one plain sentence first
+    document.querySelectorAll('#main [data-split]').forEach(el => {
+      el.textContent = el.getAttribute('aria-label') || el.textContent;
+      el.removeAttribute('aria-label');
+      delete el.dataset.split;
+    });
+    return editableNow();
+  };
+  const editableNow = () => [...document.querySelectorAll('#main *, #modal *')].filter(el =>
+    !el.children.length && el.textContent.trim() &&
+    !el.closest('input, select, textarea, option, svg, .card[data-key], .te-bar, .ticker'));
+  const onInput = e => {
+    const el = e.target;
+    if (!el.dataset || el.dataset.teOrig === undefined) return;
+    record(el.dataset.teOrig, el.textContent.trim(), 'text');
+  };
+  const block = e => { if (window.__textEditOn && !e.target.closest('.te-bar')) { e.stopPropagation(); e.preventDefault(); } };
+  const setOn = on => {
+    window.__textEditOn = on;
+    document.documentElement.classList.toggle('te-on', on);
+    panel.hidden = !on;
+    bar.querySelector('.te-toggle').textContent = on ? '✏️ עריכה פעילה' : '✏️ עריכת טקסט';
+    editable().forEach(el => {
+      if (on) { if (el.dataset.teOrig === undefined) el.dataset.teOrig = el.textContent.trim(); el.contentEditable = 'true'; }
+      else el.removeAttribute('contenteditable');
+    });
+    listHtml();
+  };
+  bar.querySelector('.te-toggle').addEventListener('click', () => setOn(!window.__textEditOn));
+  bar.querySelector('.te-done').addEventListener('click', () => { setOn(false); toast('השינויים נשמרו. אפשר לכתוב ל־Claude שסיימת.'); });
+  bar.querySelector('.te-clear').addEventListener('click', () => { edits = []; save(edits); intro.value = introNow; listHtml(); });
+  intro.addEventListener('input', () => record(introNow, intro.value.trim(), 'intro'));
+  document.addEventListener('input', onInput, true);
+  document.addEventListener('click', block, true);
+  document.addEventListener('submit', block, true);
+  document.addEventListener('keydown', e => { if (window.__textEditOn && e.key === 'Enter' && e.target.isContentEditable) e.preventDefault(); }, true);
+  // Screens that open later (tabs, dialogs) become editable too
+  new MutationObserver(() => { if (window.__textEditOn) setOn(true); }).observe(document.getElementById('main'), { childList: true });
+  listHtml();
+})();
 </script>
 </body>
 </html>
