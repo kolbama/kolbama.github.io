@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="קול במה">
-<meta name="theme-color" content="#14070b">
+<meta name="theme-color" content="#100508">
 <meta name="description" content="לוח פרויקטים חינמי לתיאטרון וקולנוע: מוצאים שחקנים, תאורנים, צלמים, אנשי סאונד ועוד, או את ההפקה הבאה שלכם.">
 <link rel="canonical" href="https://kolbama.github.io/">
 <script type="application/ld+json">
@@ -31,6 +31,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://nevbqvduboalpwmehcnj.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bellefair&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -844,6 +845,13 @@ button:active:not(:disabled), .btn:active, [role="tab"]:active { transform: scal
 .stats-strip b, .chip.count, .badge, [data-count] { font-variant-numeric: tabular-nums; }
 .card p, .card .meta, .desc { text-wrap: pretty; }
 .card h3, .who-txt h3 { overflow-wrap: anywhere; }
+/* Long links or words without spaces wrap instead of spilling out of the bubble/card */
+.m, .card p, .desc, .who-txt p, .note { overflow-wrap: anywhere; }
+/* Scrolling past the end of the chat does not move the page behind it */
+.msgs { overscroll-behavior: contain; }
+/* Native parts (scrollbars, dropdown lists, date picker) follow the site's theme, not the phone's */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 .card, .who-txt, .need-tags, .meta { min-width: 0; }
 
 /* Contrast: the burgundy accent as TEXT on the dark background was 4.0:1 (needs 4.5:1). A lighter shade for text only. */
@@ -1674,7 +1682,7 @@ let S = {
 
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', S.theme);
-  document.querySelector('meta[name=theme-color]').content = S.theme === 'dark' ? '#14070b' : '#f6f1f3';
+  document.querySelector('meta[name=theme-color]').content = S.theme === 'dark' ? '#100508' : '#f6efe3';
 }
 applyTheme();
 
@@ -2246,7 +2254,7 @@ function onboarding() {
         <textarea name="past" rows="3" required maxlength="2000" placeholder="בקצרה: הצגות, סרטים, תרגילים או הפקות שהשתתפת בהן…">${esc(prev.past || '')}</textarea>
 
         <label>קישור לתיק עבודות / אינסטגרם / שואוריל</label>
-        <input name="link" inputmode="url" dir="ltr" autocomplete="url" spellcheck="false" maxlength="300" value="${esc(prev.link || '')}" placeholder="https://instagram.com/...">
+        <input name="link" inputmode="url" dir="ltr" autocomplete="url" spellcheck="false" maxlength="300" value="${esc(prev.link || '')}" placeholder="https://instagram.com/…">
 
         ${!editing || !S.user.termsAccepted ? `
           <label class="check">
