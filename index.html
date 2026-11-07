@@ -851,7 +851,10 @@ button:active:not(:disabled), .btn:active, [role="tab"]:active { transform: scal
 /* Opening curtain (runIntro): burgundy stage curtain in two halves, manifesto in the middle */
 html.intro-on, html.intro-on body { overflow: hidden; }
 .intro { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; cursor: pointer; overflow: hidden; }
-.intro-bg { position: absolute; inset: 0; display: block; }
+.intro-bg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+/* iPhone app (home-screen): cover the whole screen, including the area behind the status bar and
+   the home bar, even before the screen size settles on launch */
+.intro { min-height: 100vh; min-height: 100lvh; }
 .intro-text { position: relative; z-index: 1; display: grid; gap: .08em; padding: 0 20px; text-align: center;
   font-family: var(--font-display); font-weight: 900; font-size: clamp(40px, 10.5vw, 118px); line-height: 1; color: #fbefe4; }
 .intro-line { display: block; text-wrap: balance; }
@@ -934,6 +937,7 @@ h1, h2, h3, h4 { letter-spacing: 0; }
 .te-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .te-row .te-clear { background: #6b5a55; }
 .te-panel { background: var(--card); color: var(--tx); border: 2px solid #1b7a4b; border-radius: 16px; padding: 14px; display: grid; gap: 8px; max-height: 60vh; overflow: auto; }
+.te-panel[hidden] { display: none; }
 .te-panel p { margin: 0; color: var(--mut); }
 .te-panel label { display: grid; gap: 4px; font-weight: 600; }
 .te-panel textarea { min-height: 64px; }
@@ -946,13 +950,13 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 /* Desktop layout (wide screens only; phones unchanged): the board spreads over the full width,
    projects and people sit in 2–3 columns, and the welcome screen splits into two sides. */
 @media (min-width: 1100px) {
-  .wrap-main { max-width: 1320px; padding-inline: 32px; }
+  .wrap-main { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); }
   .list-board, .list-pros { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); align-items: start; }
   .list-board > :not(.card), .list-pros > :not(.card) { grid-column: 1 / -1; }
-  .wrap.hero { max-width: 1320px; padding-inline: 32px; display: grid; grid-template-columns: 1.15fr .85fr; column-gap: 56px; align-items: center; }
+  .wrap.hero { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); display: grid; grid-template-columns: 1.15fr .85fr; column-gap: 56px; align-items: center; }
   .wrap.hero > :not(.hero-main):not(.pick) { grid-column: 1 / -1; }
   .wrap.hero .pick { max-width: none; }
-  .how { max-width: 1320px; padding-inline: 32px; }
+  .how { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); }
 }
 
 /* Initials in avatars read better in the text font */
@@ -1436,7 +1440,7 @@ function runIntro(onOpen) {
   const style = introStyle();
   const W = innerWidth, H = innerHeight;
   const hole = style === 'name'
-    ? `<text class="intro-name" x="${W / 2}" y="${H / 2}" text-anchor="middle" dominant-baseline="central"
+    ? `<text class="intro-name" x="50%" y="50%" text-anchor="middle" dominant-baseline="central"
          font-family="Bellefair, serif" font-size="${Math.min(W * 0.26, 260)}" fill="#000" opacity="0">קול במה</text>`
     : `<polygon class="intro-beam" points="" fill="#000" filter="url(#introSoft)"/>`;
   const fill = style === 'name'
@@ -1452,12 +1456,12 @@ function runIntro(onOpen) {
       <defs>
         <linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1">${fill}</linearGradient>
         <filter id="${id}s" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${style === 'beam' ? 14 : 0}"/></filter>
-        <mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">
-          <rect width="${W}" height="${H}" fill="#fff"/>
+        <mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+          <rect width="100%" height="100%" fill="#fff"/>
           ${hole.replace('url(#introSoft)', `url(#${id}s)`)}
         </mask>
       </defs>
-      <rect width="${W}" height="${H}" fill="url(#${id}f)" mask="url(#${id}m)"/>
+      <rect width="100%" height="100%" fill="url(#${id}f)" mask="url(#${id}m)"/>
     </svg>
     <div class="intro-text">${INTRO_LINES.map((line, i) =>
       `<span class="intro-line${i === INTRO_LINES.length - 1 ? ' intro-last' : ''}">${line.map(w =>
