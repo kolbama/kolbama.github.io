@@ -870,6 +870,11 @@ html.intro-on, html.intro-on body { overflow: hidden; }
 .site-foot { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: center; margin: 28px 0 8px; }
 .site-foot .linklike { min-height: 44px; padding-inline: 4px; color: var(--mut); text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 760px) { .wrap > .site-foot { margin-bottom: 84px; } } /* stays above the bottom tab bar */
+.site-idea { display: flex; flex-wrap: wrap; gap: 0 6px; align-items: center; justify-content: center; margin: 32px 0 0; font-size: 15px; }
+.site-idea > span { display: inline-flex; gap: 6px; align-items: center; }
+.site-idea .ic { color: var(--gold); }
+.site-idea .linklike { min-height: 44px; padding-inline: 4px; color: var(--ac-tx, var(--ac)); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.site-idea + .site-foot { margin-top: 0; }
 
 /* Short "why we ask" note under a form field (privacy: notice at the point of collection) */
 .field-why { display: flex; gap: 6px; align-items: center; margin: 6px 0 0; font-size: 13px; }
@@ -1032,6 +1037,7 @@ const ROLES = {
   costume: 'עיצוב תלבושות ואביזרים',
   set: 'עיצוב תפאורה וחלל / ארט',
   makeup: 'איפור ושיער',
+  movement: 'מעצב/ת תנועה',
   dop: 'צילום (DOP / צלם/ת)',
   gaffer: 'תאורה לצילום (גפר)',
   film_sound: 'סאונד בצילומים (בום / הקלטה)',
@@ -1042,7 +1048,7 @@ const ROLES = {
 const ROLE_GROUPS = [
   ['יצירה והפקה', ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg']],
   ['במה', ['lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr']],
-  ['עיצוב', ['costume', 'set', 'makeup']],
+  ['עיצוב', ['costume', 'set', 'makeup', 'movement']],
   ['קולנוע ווידאו', ['dop', 'gaffer', 'film_sound', 'editor']]
 ];
 
@@ -1070,8 +1076,8 @@ const REPORT_REASONS = [
 ];
 
 const MEDIA_ROLES = {
-  theater: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr', 'costume', 'set', 'makeup'],
-  film: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'dop', 'gaffer', 'film_sound', 'editor', 'sound_design', 'costume', 'set', 'makeup']
+  theater: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr', 'costume', 'set', 'makeup', 'movement'],
+  film: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'dop', 'gaffer', 'film_sound', 'editor', 'sound_design', 'costume', 'set', 'makeup', 'movement']
 };
 
 const FORMATS = {
@@ -1225,7 +1231,7 @@ const isBrowsingGuest = () => !S.user && S.isGuest && (S.browsing || !!S.focusId
 // Typed-text protection for form dialogs: remember how the form looked when it opened,
 // and ask before closing if something changed.
 const FORM_MODALS = ['proj', 'apply', 'report', 'contact'];
-const CONTACT_TOPICS = { privacy: 'פרטיות והמידע שלי', accessibility: 'נגישות', other: 'משהו אחר' };
+const CONTACT_TOPICS = { idea: 'הצעה לשיפור', privacy: 'פרטיות והמידע שלי', accessibility: 'נגישות', other: 'משהו אחר' };
 const formSnap = f => JSON.stringify([...f.elements].filter(c => c.name).map(c => c.type === 'checkbox' ? c.checked : c.value))
   + [...f.querySelectorAll('.role-pill.active')].map(b => b.dataset.id).join(',');
 const formDirty = () => {
@@ -2088,7 +2094,8 @@ const DATA_LOCATION = 'גרמניה (פרנקפורט), באיחוד האירו�
 // Requests reach the admin through the in-site contact form (table contact_requests), never a public email.
 
 // Small row of links at the bottom of every screen
-const footLinks = () => `<p class="note site-foot">
+const footLinks = () => `<p class="site-idea"><span>${ic('lightbulb')} יש לכם הצעה לשיפור?</span><button type="button" class="linklike" data-a="contact" data-id="idea">כתבו לנו כאן</button></p>
+<p class="note site-foot">
   <button type="button" class="linklike" data-a="terms">תנאי שימוש ופרטיות</button>
   <span aria-hidden="true">·</span>
   <button type="button" class="linklike" data-a="access">הצהרת נגישות</button>
@@ -2669,9 +2676,7 @@ function renderTabContent() {
           <label class="btn ghost sm photo-pick">${ic('camera')} ${u.photo ? 'החלפת התמונה' : 'הוספת תמונת פרופיל'}
             <input type="file" accept="image/*" data-photo class="vh">
           </label>
-          ${u.photo ? `<button type="button" class="btn ghost sm" data-a="photo-remove">${ic('trash-2')} הסרת התמונה</button>` : ''}
-          <span class="note" style="margin:0">רשות. כל המשתמשים רואים אותה.</span>
-        </div>
+          ${u.photo ? `<button type="button" class="btn ghost sm" data-a="photo-remove">${ic('trash-2')} הסרת התמונה</button>` : ''}        </div>
         ${skills.length ? `<div class="need-tags">${skills.map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>` : ''}
         <p class="meta" style="margin:10px 0 14px">${ic('map-pin')} ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · ${ic('lock')} טלפון לאישור: ${esc(u.phone || 'לא הוזן')}</p>
         ${u.studioOrGear ? `<p><b>מסגרת / ציוד וכלים:</b> ${esc(u.studioOrGear)}</p>` : ''}
@@ -2868,16 +2873,17 @@ function modalView() {
   } else if (m === 'access') {
     h = accessHtml() + `<div class="row" style="margin-top:16px"><button class="btn ghost" data-a="close">סגירה</button></div>`;
   } else if (m === 'contact') {
-    h = `<h3 id="dlg-title">${ic('message-circle')} יצירת קשר</h3>
-      <p class="note">הפנייה מגיעה רק למנהל האתר. עונים תוך 30 יום לכל היותר.</p>
+    const idea = S.contactTopic === 'idea';
+    h = `<h3 id="dlg-title">${idea ? ic('lightbulb') + ' הצעה לשיפור' : ic('message-circle') + ' יצירת קשר'}</h3>
+      <p class="note">${idea ? 'ההצעה מגיעה ישירות למנהל האתר. תודה שאתם עוזרים לשפר!' : 'הפנייה מגיעה רק למנהל האתר. עונים תוך 30 יום לכל היותר.'}</p>
       <form data-f="contact">
         <label for="ct-topic">בנושא *</label>
         <select id="ct-topic" name="topic" required>${opts(CONTACT_TOPICS, S.contactTopic || 'other')}</select>
-        <label for="ct-msg">מה רצית לכתוב? *</label>
-        <textarea id="ct-msg" name="message" rows="4" required maxlength="2000" placeholder="למשל: בקשה לקבל את המידע שלי, בעיה בכפתור מסוים, הצעה…"></textarea>
-        <label for="ct-reply">איך לחזור אליך? (רשות)</label>
+        <label for="ct-msg">${idea ? 'מה אפשר לשפר?' : 'מה רצית לכתוב?'} *</label>
+        <textarea id="ct-msg" name="message" rows="4" required maxlength="2000" placeholder="${idea ? 'למשל: תפקיד שחסר, משהו שלא נוח, רעיון חדש…' : 'למשל: בקשה לקבל את המידע שלי, בעיה בכפתור מסוים, הצעה…'}"></textarea>
+        ${idea ? '' : `<label for="ct-reply">איך לחזור אליך? (רשות)</label>
         <input id="ct-reply" name="reply_to" maxlength="200" autocomplete="email" placeholder="מייל או טלפון" aria-describedby="ct-reply-why">
-        <p class="note field-why" id="ct-reply-why">${ic('lock')} רק המנהל רואה את זה, ורק כדי לענות לך.${S.user ? ' אפשר גם להשאיר ריק ולקבל תשובה בהודעה באתר.' : ''}</p>
+        <p class="note field-why" id="ct-reply-why">${ic('lock')} רק המנהל רואה את זה, ורק כדי לענות לך.${S.user ? ' אפשר גם להשאיר ריק ולקבל תשובה בהודעה באתר.' : ''}</p>`}
         <div class="row" style="margin-top:16px">
           <button class="btn">שליחה</button>
           <button type="button" class="btn ghost" data-a="close">ביטול</button>
