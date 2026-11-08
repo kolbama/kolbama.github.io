@@ -986,6 +986,9 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
   .wrap.hero { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); display: grid; grid-template-columns: 1.15fr .85fr; column-gap: 56px; align-items: center; }
   .wrap.hero > :not(.hero-main):not(.pick) { grid-column: 1 / -1; }
   .wrap.hero .pick { max-width: none; }
+  /* The stage (light + haze) must fill the whole opening screen. The rule above put it in the grid
+     area, so it stopped at the padding and showed hard edges like a box. */
+  .wrap.hero > .hero-stage.hero-stage.hero-stage { grid-column: auto; grid-row: auto; }
   .how { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); }
 }
 
@@ -2310,6 +2313,22 @@ async function boot() {
     sb.channel('kol-bama')
       .on('postgres_changes', { event: '*', schema: 'public' }, scheduleReload)
       .subscribe();
+    // A guest can no longer receive live profile changes (the database hides them), so the numbers
+    // on the opening screen and in the people tab are refreshed every 30 seconds instead.
+    if (S.isGuest && !S.user) setInterval(async () => {
+      if (document.visibilityState !== 'visible' || S.user || S.modal) return;
+      try {
+        await loadAll();
+        if (S.user) return;
+        // opening screen: update the numbers in place (the screen itself is not redrawn)
+        document.querySelectorAll('.stats-strip > div').forEach(d => {
+          const b = d.querySelector('b'), label = (d.querySelector('span') || {}).textContent || '';
+          const n = label.includes('אנשי מקצוע') ? proCount() : label.includes('פרויקטים') ? S.projects.filter(isOpen).length : null;
+          if (b && n !== null && b.textContent !== String(n)) { b.textContent = n; b.dataset.count = n; }
+        });
+        refreshView();
+      } catch (e) { console.error(e); }
+    }, 30000);
   } catch (e) {
     console.error(e);
     S.error = 'לא הצלחנו להתחבר לשרת. כדאי לבדוק את החיבור לאינטרנט ולנסות שוב.';
@@ -3609,7 +3628,7 @@ document.addEventListener('click', async e => {
     renderModal();
   } else if (a === 'browse') {
     S.browsing = true;
-    S.tab = 'board';
+    S.tab = 'pros'; // a guest lands on the people list first
     pushScreen();
     render();
     window.scrollTo(0, 0);
