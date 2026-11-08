@@ -1052,6 +1052,18 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 .medium-card span svg { width: 26px; height: 26px; }
 .medium-card input:checked + span { border-color: var(--gold); background: var(--gold-bg); }
 .medium-card input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* Guest teaser in the people tab: blurred cards, only professions are readable */
+.ghost-head { text-align: center; padding: 8px 0 20px; grid-column: 1 / -1; }
+.ghost-head h3 { font-family: var(--font-display); font-weight: 400; font-size: 28px; color: var(--tx); margin: 0 0 6px; }
+.ghost-head p { color: var(--mut); margin: 0 0 16px; }
+.ghost-card { padding: 16px; pointer-events: none; user-select: none; }
+.ghost-card .who { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.ghost-av, .ghost-name { display: block; background: var(--line); filter: blur(5px); }
+.ghost-av { width: 56px; height: 56px; border-radius: 50%; flex: none; }
+.ghost-name { width: 130px; height: 16px; border-radius: 8px; margin-bottom: 8px; }
+.ghost-city { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--mut); }
+.ghost-city .ic { width: 14px; height: 14px; }
+.ghost-card .need-tags { filter: none; }
 </style>
 </head>
 <body>
@@ -2026,23 +2038,34 @@ function b64uBytes(s) {
   const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
   return Uint8Array.from(b, c => c.charCodeAt(0));
 }
+// Each step has a time limit, and a failure names the step, so a stuck iPhone shows us where it stopped
+function pushStep(name, p, ms) {
+  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms || 15000))])
+    .catch(e => { throw new Error(name + ': ' + ((e && (e.name + ' ' + e.message)) || e)); });
+}
 async function enablePush() {
-  const perm = await Notification.requestPermission();
-  if (perm !== 'granted') { toast(perm === 'denied' ? 'ההתראות חסומות בהגדרות הדפדפן' : 'ההתראות לא הופעלו'); return false; }
+  S.pushError = '';
+  // Older iPhones use a callback here instead of a promise
+  const perm = await new Promise(res => { const r = Notification.requestPermission(res); if (r && r.then) r.then(res); });
+  if (perm !== 'granted') { toast(perm === 'denied' ? 'ההתראות חסומות בהגדרות הטלפון' : 'ההתראות לא הופעלו'); return false; }
   try {
-    const reg = await navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready);
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uBytes(PUSH_PUBLIC_KEY) });
+    const reg = await pushStep('sw', navigator.serviceWorker.getRegistration()
+      .then(r => r || navigator.serviceWorker.register('sw.js'))
+      .then(() => navigator.serviceWorker.ready));
+    let sub = await pushStep('get', reg.pushManager.getSubscription());
+    if (!sub) sub = await pushStep('subscribe', reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uBytes(PUSH_PUBLIC_KEY) }));
     const k = sub.toJSON().keys || {};
-    const ok = await db(sb.rpc('save_push_subscription', { p_endpoint: sub.endpoint, p_p256dh: k.p256dh, p_auth: k.auth }),
-      'לא הצלחנו להפעיל התראות. אפשר לנסות שוב.');
-    if (!ok) return false;
+    const { error } = await pushStep('save', sb.rpc('save_push_subscription', { p_endpoint: sub.endpoint, p_p256dh: k.p256dh, p_auth: k.auth }));
+    if (error) throw new Error('save: ' + (error.message || error.code));
     S.pushOn = true;
     toast('ההתראות הופעלו 🔔');
     return true;
   } catch (e) {
     console.error(e);
-    toast('לא הצלחנו להפעיל התראות במכשיר הזה');
+    // Short Hebrew message that names the step that got stuck (details stay in the console)
+    const step = String(e.message || e).split(':')[0];
+    S.pushError = { sw: 'נתקע בהכנת האפליקציה להתראות', get: 'נתקע בבדיקת המכשיר', subscribe: 'נתקע ברישום המכשיר להתראות', save: 'נתקע בשמירת המכשיר אצלנו' }[step] || 'משהו נתקע בדרך';
+    toast('לא הצלחנו להפעיל התראות');
     return false;
   }
 }
@@ -2074,6 +2097,7 @@ function pushCard() {
   } else {
     body = what + `<button class="btn sm" data-a="push-on">${ic('bell')} הפעלת התראות</button>`;
   }
+  if (S.pushError && st !== 'on') body += `<p class="note" style="margin:10px 0 0;font-size:13px">${esc(S.pushError)}. אפשר לנסות שוב.</p>`;
   return `<div class="card" style="padding:20px">
     <h4 style="font-size:18px;margin-bottom:6px">${ic('bell')} התראות לטלפון</h4>
     ${body}
@@ -2106,6 +2130,7 @@ function toast(msg) {
 
 // ───────────── Database ─────────────
 
+const proCount = () => (S.guestPeople || S.pros).length;
 const nameOf = id => (S.profiles[id] && S.profiles[id].name) || 'משתמש/ת';
 
 function toProject(r) {
@@ -2190,6 +2215,14 @@ async function loadAll() {
   S.blocked = new Set(blocks.map(b => b.blocked_id));
   const visible = id => !S.blocked.has(id); // people I blocked disappear from my screens
   S.profiles = Object.fromEntries(profiles.map(p => [p.id, p]));
+  // A guest (no profile of their own) cannot read profiles. They get only professions + city of people
+  // looking for work, and the names of project owners (those names are on the project cards anyway).
+  S.guestPeople = null;
+  if (S.isGuest && !S.profiles[S.uid]) {
+    const [gp, go] = await Promise.all([sb.rpc('guest_people'), sb.rpc('guest_owners')]);
+    if (!gp.error) S.guestPeople = gp.data || [];
+    if (!go.error) (go.data || []).forEach(o => { if (!S.profiles[o.id]) S.profiles[o.id] = o; });
+  }
   S.phones = Object.fromEntries(contacts.map(c => [c.user_id, c.phone]));
   S.counts = Object.fromEntries(counts.map(c => [c.user_id, Number(c.completed)]));
   S.projects = projects.map(toProject).filter(p => visible(p.uid));
@@ -2400,7 +2433,7 @@ function statusScreen() {
 
 function welcome() {
   const open = S.projects.filter(isOpen).length;
-  const pros = S.pros.length;
+  const pros = proCount();
   const matches = Object.values(S.counts).reduce((a, b) => a + b, 0);
   const stat = (n, label) => `<div><b data-count="${n}">${n}</b><span>${label}</span></div>`;
   return `<div class="wrap hero">
@@ -2543,7 +2576,8 @@ function termsHtml() {
 
     <h4>מי רואה מה</h4>
     <ul>
-      <li><b>הפרופיל (כולל התמונה) והפרויקטים</b> – כל משתמשי האתר.</li>
+      <li><b>הפרופיל (כולל התמונה) והפרויקטים</b> – כל משתמשי האתר הרשומים.</li>
+      <li><b>גולשים שלא נרשמו</b> – רואים רק תפקידים ועיר של אנשי מקצוע, בלי שם ובלי תמונה, וכמה פרויקטים פתוחים ואילו תפקידים הם מחפשים. פרויקט שמישהו שיתף בקישור נפתח גם להם.</li>
       <li><b>מספר הטלפון</b> – רק את/ה, ומי שיש לו איתך מועמדות שאושרה.</li>
       <li><b>מועמדויות</b> – רק המועמד ובעל הפרויקט.</li>
       <li><b>הודעות</b> – רק שני האנשים בשיחה.</li>
@@ -2693,7 +2727,7 @@ function mainView() {
       <button role="tab" aria-selected="${S.tab === 'pros'}" data-a="tab" data-id="pros">
         <span class="ti">${ic('users')}</span>
         <span class="lbl-long">אנשי מקצוע</span><span class="lbl-short">אנשי מקצוע</span>
-        <span class="chip count">${guest ? ic('lock') : S.pros.length}</span>
+        <span class="chip count">${proCount()}</span>
       </button>
       ${guest ? '' : `<button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps" aria-label="הודעות ומועמדויות${pendingCount ? `, ${pendingCount} חדשות` : ''}">
         <span class="ti">${ic('inbox')}${pendingCount ? `<span class="badge">${pendingCount}</span>` : ''}</span>
@@ -2711,7 +2745,7 @@ function mainView() {
 
     <h1 class="page-title">${esc(PAGE_TITLES[S.tab] || '')}</h1>
 
-    ${S.tab === 'board' && !S.focusId ? `
+    ${S.tab === 'board' && !S.focusId && !guest ? `
       <div class="searchbar">
         <label class="srch">${ic('search')}<input data-k="q" aria-label="חיפוש" placeholder="חיפוש לפי שם, עיר, ציוד או תיאור…" value="${esc(S.q)}"></label>
         <button type="button" class="btn ghost filter-toggle" data-a="toggle-filters" aria-expanded="${S.filtersOpen}" aria-controls="filters">${ic('sliders-horizontal')} סינון <span class="badge fbadge"${filterCount() ? '' : ' hidden'}>${filterCount()}</span></button>
@@ -2753,7 +2787,7 @@ function mainView() {
     ` : ''}
 
     ${guest ? `<div class="note focus-bar" style="margin-bottom:16px">
-      <span>${ic('sparkles')} את/ה גולש/ת כאורח/ת. כדי להגיש מועמדות, לשלוח הודעה או לפרסם פרויקט, צריך להצטרף עם גוגל (חינם).</span>
+      <span>${ic('sparkles')} את/ה גולש/ת כאורח/ת. כדי להגיש מועמדות, לשלוח הודעה או לפרסם פרויקט, צריך להצטרף עם גוגל.</span>
       <div class="row">
         <button class="btn sm" data-a="join" data-id="pro">הצטרפות</button>
         <button class="btn ghost sm" data-a="leave-browse">מסך הפתיחה</button>
@@ -2834,6 +2868,20 @@ function renderTabContent() {
         </div>${p ? projectCard(p) : ''}`;
     }
 
+    // A guest does not see the projects. Only how many are open and which professions they need.
+    if (!S.user) {
+      const open = S.projects.filter(isOpen);
+      const ghosts = open.slice(0, 6).map(p => `<article class="card ghost-card" aria-hidden="true">
+        <div class="who"><div class="who-txt"><span class="ghost-name" style="width:170px"></span></div></div>
+        <div class="need-tags">${projRoles(p).slice(0, 4).map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>
+      </article>`).join('');
+      return `<div class="ghost-head">
+          <h3>${open.length ? (open.length === 1 ? 'פרויקט אחד מחפש צוות עכשיו' : `${open.length} פרויקטים מחפשים צוות עכשיו`) : 'פרויקטים חדשים עולים כאן'}</h3>
+          <p>הירשמו כדי לראות מי מגייס, מה הם מחפשים ולהגיש מועמדות.</p>
+          <button class="btn" data-a="join" data-id="pro">${ic('user-round')} הצטרפות עם גוגל</button>
+        </div>${ghosts}`;
+    }
+
     const arr = S.projects.filter(p => {
       const matchRole = S.role === 'all' || projRoles(p).includes(S.role);
       const matchFrame = S.frame === 'all' || p.frame === S.frame;
@@ -2856,12 +2904,26 @@ function renderTabContent() {
 
   if (S.tab === 'pros') {
     if (!S.user) {
-      return `<div class="empty">
-        <span class="empty-ic">${ic('lock')}</span>
-        <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">אנשי המקצוע גלויים לחברים</h3>
-        <p style="margin:0 0 16px">הצטרפו עם גוגל (חינם) כדי לראות פרופילים וליצור קשר.</p>
-        <button class="btn" data-a="join" data-id="pro">${ic('user-round')} הצטרפות עם גוגל</button>
-      </div>`;
+      // FOMO teaser: real count, one blurred card per real person showing only their professions
+      // (no name, photo, city or region, so nobody can be identified)
+      // City only when at least 3 people share it (the database applies the same rule)
+      const rawPeople = S.guestPeople || S.pros;
+      const cityCount = {};
+      rawPeople.forEach(p => { const c = (p.loc || '').trim().toLowerCase(); cityCount[c] = (cityCount[c] || 0) + 1; });
+      const people = rawPeople.map(p => ({ skills: p.skills, loc: cityCount[(p.loc || '').trim().toLowerCase()] >= 3 ? p.loc : '' }));
+      const n = people.length;
+      const ghosts = people.slice(0, 12).map(p => `<article class="card ghost-card" aria-hidden="true">
+        <div class="who">
+          <span class="ghost-av"></span>
+          <div class="who-txt"><span class="ghost-name"></span>${p.loc ? `<span class="ghost-city">${ic('map-pin')} ${esc(p.loc)}</span>` : ''}</div>
+        </div>
+        <div class="need-tags">${skillsOf(p).slice(0, 3).map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>
+      </article>`).join('');
+      return `<div class="ghost-head">
+          <h3>${n ? `${n} אנשי מקצוע כבר בפנים` : 'אנשי מקצוע מצטרפים עכשיו'}</h3>
+          <p>תאורה, סאונד, בימוי, משחק ועוד. הירשמו כדי לראות מי הם וליצור קשר.</p>
+          <button class="btn" data-a="join" data-id="pro">${ic('user-round')} הצטרפות עם גוגל</button>
+        </div>${ghosts}`;
     }
     const arr = S.pros.filter(p => hit(p.name, p.loc, p.region, p.past, p.studioOrGear)
       && (S.role === 'all' || skillsOf(p).includes(S.role))
