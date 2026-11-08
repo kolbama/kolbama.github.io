@@ -1011,6 +1011,26 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 .photo-pick { cursor: pointer; position: relative; }
 .vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .photo-pick:focus-within { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* Signup form: a big round photo picker at the top (like WhatsApp / Instagram) */
+.ob-photo { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 18px 0 6px; }
+.ob-photo-circle { width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; position: relative;
+  border: 2px dashed var(--line, rgba(0,0,0,.2)); background: var(--card); color: var(--mut); overflow: hidden; text-align: center; font-size: 13px; line-height: 1.3; }
+.ob-photo-circle:hover { border-color: var(--gold); color: var(--ink, inherit); }
+.ob-photo-circle:focus-within { outline: 2px solid var(--gold); outline-offset: 3px; }
+.ob-photo-circle img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ob-photo-circle.has-img { border-style: solid; border-color: var(--gold); }
+.ob-photo-circle .ob-photo-empty { display: grid; justify-items: center; gap: 4px; padding: 8px; }
+.ob-photo .note { margin: 0; }
+/* Signup steps: progress bar on top, Back / Next at the bottom */
+.ob-progress { margin: 14px 0 4px; }
+.ob-progress-txt { font-size: 14px; color: var(--mut); margin-bottom: 6px; }
+.ob-bar { height: 6px; border-radius: 99px; background: rgba(128,128,128,.22); overflow: hidden; }
+.ob-bar span { display: block; height: 100%; background: var(--gold); border-radius: inherit; transition: width .3s ease; }
+@media (prefers-reduced-motion: reduce) { .ob-bar span { transition: none; } }
+.ob-nav { margin-top: 18px; gap: 10px; flex-wrap: nowrap; }
+.ob-nav .btn { flex: 1; justify-content: center; }
+.ob-nav .btn.ghost { flex: 0 0 auto; }
+.ob-step .fs-title:focus { outline: none; }
 </style>
 </head>
 <body>
@@ -1212,19 +1232,86 @@ async function clearPhotos(uid, keep = '') {
   if (old.length) await sb.storage.from('avatars').remove(old);
 }
 
+// Upload an already-squared photo to the person's folder and link it to their profile
+async function savePhotoBlob(blob) {
+  const path = `${S.uid}/${Date.now()}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
+  const up = await sb.storage.from('avatars').upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
+  if (up.error) { console.error(up.error); toast('העלאת התמונה נכשלה. אפשר לנסות שוב מלשונית הפרופיל.'); return false; }
+  const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+  const ok = await db(sb.from('profiles').update({ avatar_url: url }).eq('id', S.uid), 'שמירת התמונה נכשלה. אפשר לנסות שוב מלשונית הפרופיל.');
+  if (!ok) return false;
+  await clearPhotos(S.uid, path).catch(() => {});
+  return true;
+}
+
+// Photo picked in the signup form: kept in memory and shown in the circle, uploaded only when the form is saved
+async function pickSignupPhoto(file) {
+  if (!file || !/^image\//.test(file.type)) { toast('צריך לבחור קובץ תמונה'); return; }
+  if (file.size > 25 * 1024 * 1024) { toast('התמונה גדולה מדי. אפשר לבחור תמונה אחרת.'); return; }
+  let blob;
+  try { blob = await squarePhoto(file); } catch (e) { toast('את סוג התמונה הזה לא הצלחנו לפתוח. אפשר לנסות JPG או PNG.'); return; }
+  if (S.obPhoto) URL.revokeObjectURL(S.obPhoto.url);
+  S.obPhoto = { blob, url: URL.createObjectURL(blob) };
+  const box = $('.ob-photo');
+  if (box) box.outerHTML = obPhotoPicker();
+}
+
+function obPhotoPicker() {
+  const src = S.obPhoto ? S.obPhoto.url : (S.onboardingType === 'edit' && S.user && S.user.photo && S.user.photo.startsWith(AVATAR_PREFIX) ? S.user.photo : '');
+  return `<div class="ob-photo">
+    <label class="ob-photo-circle${src ? ' has-img' : ''}" aria-label="${src ? 'החלפת תמונת הפרופיל' : 'הוספת תמונת פרופיל'}">
+      ${src ? `<img src="${esc(src)}" alt="">` : `<span class="ob-photo-empty">${ic('camera')}<span>הוספת תמונה</span></span>`}
+      <input type="file" accept="image/*" data-ob-photo class="vh">
+    </label>
+    <p class="note">${src ? 'לחיצה על התמונה מחליפה אותה' : 'רשות. אפשר להוסיף גם אחר כך'}</p>
+  </div>`;
+}
+
+// ── Signup in 3 steps ──
+const OB_STEPS = ['פרטים אישיים', 'התחומים שלך', 'ניסיון וקישורים'];
+const obProgress = n => `<div class="ob-progress" aria-live="polite">
+    <div class="ob-progress-txt">שלב ${n} מתוך 3 · ${OB_STEPS[n - 1]}</div>
+    <div class="ob-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="${n}" aria-label="התקדמות בהרשמה"><span style="width:${n / 3 * 100}%"></span></div>
+  </div>`;
+
+// What was typed so far is kept in this tab only (sessionStorage), so going back or a refresh loses nothing
+const OB_DRAFT = 'kb_ob_draft';
+function saveObDraft(f) {
+  if (!f || S.onboardingType === 'edit') return;
+  const d = Object.fromEntries(new FormData(f));
+  delete d.terms;
+  try { sessionStorage.setItem(OB_DRAFT, JSON.stringify({ ...d, seeking: !!d.seeking, skills: picked(f) })); } catch (e) {}
+}
+function loadObDraft() { try { return JSON.parse(sessionStorage.getItem(OB_DRAFT) || 'null'); } catch (e) { return null; } }
+function clearObDraft() { try { sessionStorage.removeItem(OB_DRAFT); } catch (e) {} }
+
+// Is everything required in this step filled in? If not, point at the first missing field
+function obStepValid(f, n) {
+  const st = f.querySelector(`.ob-step[data-step="${n}"]`);
+  const bad = [...st.querySelectorAll('input, select, textarea')].find(x => !x.checkValidity());
+  if (bad) { bad.reportValidity(); return false; }
+  if (n === 2 && f.elements.seeking.checked && !picked(f).length) { toast('כדי להופיע באינדקס, בחר/י לפחות תחום אחד'); return false; }
+  return true;
+}
+function goObStep(n, push = true) {
+  const f = $('form[data-f="onboard"]');
+  if (!f) return;
+  S.obStep = n;
+  if (push) pushScreen();
+  f.querySelectorAll('.ob-step').forEach(st => { st.hidden = +st.dataset.step !== n; });
+  f.querySelector('.ob-progress').outerHTML = obProgress(n);
+  window.scrollTo(0, 0);
+  const first = f.querySelector(`.ob-step[data-step="${n}"] .fs-title`);
+  if (first) { first.tabIndex = -1; first.focus({ preventScroll: true }); }
+}
+
 async function uploadPhoto(file) {
   if (!file || !/^image\//.test(file.type)) { toast('צריך לבחור קובץ תמונה'); return; }
   if (file.size > 25 * 1024 * 1024) { toast('התמונה גדולה מדי. אפשר לבחור תמונה אחרת.'); return; }
   toast('מעלים את התמונה…');
   let blob;
   try { blob = await squarePhoto(file); } catch (e) { toast('את סוג התמונה הזה לא הצלחנו לפתוח. אפשר לנסות JPG או PNG.'); return; }
-  const path = `${S.uid}/${Date.now()}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
-  const up = await sb.storage.from('avatars').upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
-  if (up.error) { console.error(up.error); toast('ההעלאה נכשלה. אפשר לנסות שוב.'); return; }
-  const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
-  const ok = await db(sb.from('profiles').update({ avatar_url: url }).eq('id', S.uid), 'השמירה נכשלה. אפשר לנסות שוב.');
-  if (!ok) return;
-  await clearPhotos(S.uid, path).catch(() => {});
+  if (!await savePhotoBlob(blob)) return;
   await loadAll();
   render();
   toast('התמונה נשמרה');
@@ -2201,15 +2288,26 @@ function termsHtml() {
 
 function onboarding() {
   const editing = S.onboardingType === 'edit';
-  const prev = editing ? S.user : (legacyUser() || { name: S.googleName });
-  const seeking = editing || prev.name ? !!prev.seeking : S.onboardingType === 'pro';
+  // A new signup continues from what was already typed (kept in this tab only)
+  const prev = editing ? S.user : { ...(legacyUser() || { name: S.googleName }), ...(loadObDraft() || {}) };
+  const seeking = 'seeking' in prev ? !!prev.seeking : S.onboardingType === 'pro';
   const skills = skillsOf(prev);
+  // Signup is split into 3 short steps; editing an existing profile shows everything on one page (step 0)
+  const step = editing ? 0 : (S.obStep || 1);
+  const hide = n => step && step !== n ? ' hidden' : '';
+  const nav = n => step ? `<div class="row ob-nav">
+      ${n > 1 ? `<button type="button" class="btn ghost" data-a="ob-prev">→ הקודם</button>` : ''}
+      ${n < 3 ? `<button type="button" class="btn" data-a="ob-next">הבא ←</button>` : ''}
+    </div>` : '';
   return `<div class="wrap" style="max-width:560px;padding-top:24px">
     <button class="btn ghost sm" data-a="${editing ? 'cancel-edit' : S.isGuest ? 'back-welcome' : 'logout'}">→ חזרה</button>
     <div class="card" style="margin-top:16px;padding:24px">
       <h2 style="font-size:28px">${editing ? 'עריכת הפרופיל שלי' : 'הצטרפות ל״קול במה״'}</h2>
       <p class="note">פרופיל אחד לכל דבר: אפשר לחפש עבודה וגם לפרסם פרויקטים.</p>
-      <form data-f="onboard">
+      <form data-f="onboard" novalidate>
+        ${step ? obProgress(step) : ''}
+        <div class="ob-step" data-step="1"${hide(1)}>
+        ${obPhotoPicker()}
         <div class="fs-title"><span>1</span>פרטים אישיים</div>
         <div class="grid2">
           <div>
@@ -2231,7 +2329,10 @@ function onboarding() {
         <label for="ob-phone">מספר טלפון *</label>
         <input id="ob-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" required maxlength="30" value="${esc(prev.phone || '')}" placeholder="050-0000000" aria-describedby="ob-phone-why">
         <p class="note field-why" id="ob-phone-why">${ic('lock')} חסוי. נחשף רק למי שאישר/ה את המועמדות שלך, כדי שיוכלו ליצור קשר.</p>
+        ${nav(1)}
+        </div>
 
+        <div class="ob-step" data-step="2"${hide(2)}>
         <div class="fs-title"><span>2</span>התחומים שלך</div>
         <label>בחר/י תחום אחד או יותר</label>
         ${ROLE_GROUPS.map(([title, keys]) => `
@@ -2245,7 +2346,10 @@ function onboarding() {
           <input type="checkbox" name="seeking"${seeking ? ' checked' : ''}>
           <span><b>אני מחפש/ת עבודה</b> – הציגו אותי באינדקס אנשי המקצוע</span>
         </label>
+        ${nav(2)}
+        </div>
 
+        <div class="ob-step" data-step="3"${hide(3)}>
         <div class="fs-title"><span>3</span>ניסיון וקישורים</div>
         <label>מסגרת, ציוד או כלים שיש לך ניסיון איתם</label>
         <input name="studioOrGear" maxlength="300" value="${esc(prev.studioOrGear || '')}" placeholder="למשל: סטודיו למשחק, grandMA, QLab, מצלמת קולנוע, תפירה…">
@@ -2263,8 +2367,10 @@ function onboarding() {
           </label>
         ` : ''}
 
-        <div class="row" style="margin-top:18px">
-          <button class="btn" style="width:100%">${editing ? 'שמירת השינויים' : 'שמירה וכניסה ל״קול במה״'}</button>
+        <div class="row ob-nav" style="margin-top:18px">
+          ${step ? `<button type="button" class="btn ghost" data-a="ob-prev">→ הקודם</button>` : ''}
+          <button class="btn ob-save">${editing ? 'שמירת השינויים' : 'שמירה וכניסה ל״קול במה״'}</button>
+        </div>
         </div>
       </form>
     </div>
@@ -2897,6 +3003,14 @@ function modalView() {
           <button type="button" class="btn ghost" data-a="close">ביטול</button>
         </div>
       </form>`;
+  } else if (m === 'photo-nudge') {
+    h = `<h3>${esc(NUDGE.title)}</h3>
+      <p>${esc(NUDGE.body)}</p>
+      <p class="note" style="margin:0">צוות ״קול במה״</p>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" data-a="nudge-add">${ic('camera')} הוספת תמונה</button>
+        <button class="btn ghost" data-a="close">אחר כך</button>
+      </div>`;
   } else if (m === 'confirm') {
     h = `<h3>רגע, בטוח?</h3>
       <p>${esc(S.confirm.text)}</p>
@@ -2907,6 +3021,30 @@ function modalView() {
   }
 
   return `<div class="ov" data-a="ovl"><div class="dlg" role="dialog" aria-modal="true">${h}</div></div>`;
+}
+
+// One-time window for people who joined before signup had a photo: "you can add a photo now".
+// Shown once per account on this device; people without a photo only.
+const NUDGE = {
+  title: 'חדש: תמונת פרופיל',
+  body: 'היי, שמחים שהצטרפת ל״קול במה״! מעכשיו אפשר להוסיף תמונת פרופיל. עם תמונה, יוצרים ואנשי מקצוע מזהים אותך מהר יותר. רוצה להוסיף אחת עכשיו?'
+};
+const NUDGE_KEY = 'kb_photo_nudge';
+function nudgeSeen() {
+  if (S.nudged) return true;
+  try { return JSON.parse(localStorage.getItem(NUDGE_KEY) || '[]').includes(S.uid); } catch (e) { return false; }
+}
+function markNudged() {
+  S.nudged = true;
+  try {
+    const seen = JSON.parse(localStorage.getItem(NUDGE_KEY) || '[]');
+    if (!seen.includes(S.uid)) localStorage.setItem(NUDGE_KEY, JSON.stringify([...seen, S.uid].slice(-20)));
+  } catch (e) {}
+}
+function maybePhotoNudge() {
+  if (!S.user || S.user.photo || S.modal || S.onboardingType || nudgeSeen()) return;
+  markNudged();
+  S.modal = 'photo-nudge';
 }
 
 function render() {
@@ -2936,6 +3074,7 @@ function render() {
     motionAfterRender();
     // Preview link (?intro=name / ?intro=beam) also plays the intro for signed-in people, once
     if (/[?&]intro=/.test(location.search) && !S.introPreviewed) { S.introPreviewed = true; runIntro(() => {}); }
+    maybePhotoNudge();
   }
   renderModal();
 }
@@ -3032,7 +3171,7 @@ function closeModal() {
 // Each screen change adds a step to the browser history, and an open window adds one more.
 // "Back" closes the open window first (asking before throwing away typed text), then returns
 // to the previous screen, and only then leaves the site. The address bar does not change.
-const navState = () => ({ tab: S.tab, browsing: !!S.browsing, onboardingType: S.onboardingType || null });
+const navState = () => ({ tab: S.tab, browsing: !!S.browsing, onboardingType: S.onboardingType || null, obStep: S.obStep || 1 });
 let modalInHistory = false, skipNextPop = false;
 
 function pushScreen() {
@@ -3072,6 +3211,7 @@ window.addEventListener('popstate', e => {
   S.tab = st.tab;
   S.browsing = st.browsing;
   S.onboardingType = st.onboardingType;
+  S.obStep = st.obStep || 1;
   render();
   window.scrollTo(0, 0);
 });
@@ -3134,6 +3274,7 @@ document.addEventListener('click', async e => {
       return;
     }
     S.onboardingType = id;
+    S.obStep = 1;
     pushScreen();
     render();
   } else if (a === 'install') {
@@ -3154,6 +3295,7 @@ document.addEventListener('click', async e => {
     await googleLogin();
     el.disabled = false;
   } else if (a === 'logout') {
+    clearObDraft(); S.obStep = 1;
     await logout();
   } else if (a === 'back-welcome') {
     S.onboardingType = null;
@@ -3231,6 +3373,19 @@ document.addEventListener('click', async e => {
   } else if (a === 'toggle-role') {
     const on = el.classList.toggle('active');
     el.setAttribute('aria-pressed', on);
+    if (el.form && el.form.dataset.f === 'onboard') saveObDraft(el.form);
+  } else if (a === 'nudge-add') {
+    // Straight to the profile tab and open the photo picker (still inside the tap, so phones allow it)
+    closeModal();
+    S.tab = 'profile';
+    render();
+    const inp = $('input[data-photo]');
+    if (inp) inp.click();
+  } else if (a === 'ob-next' || a === 'ob-prev') {
+    const f = el.form, cur = +el.closest('.ob-step').dataset.step;
+    if (a === 'ob-next' && !obStepValid(f, cur)) return;
+    saveObDraft(f);
+    goObStep(cur + (a === 'ob-next' ? 1 : -1));
   } else if (a === 'terms') {
     e.preventDefault();
     S.modal = 'terms';
@@ -3355,6 +3510,17 @@ document.addEventListener('change', e => {
   e.target.value = '';
   if (file && S.user) uploadPhoto(file);
 });
+// Signup draft: remember what was typed
+['input', 'change'].forEach(type => document.addEventListener(type, e => {
+  const f = e.target.form;
+  if (f && f.dataset.f === 'onboard') saveObDraft(f);
+}));
+document.addEventListener('change', e => {
+  if (!e.target.matches || !e.target.matches('input[data-ob-photo]')) return;
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (file) pickSignupPhoto(file);
+});
 
 // Switching theater/film in the project form swaps formats, stages and roles
 document.addEventListener('change', e => {
@@ -3381,10 +3547,16 @@ document.addEventListener('submit', async e => {
   const f = e.target, d = Object.fromEntries(new FormData(f)), t = f.dataset.f;
 
   if (t === 'onboard') {
+    // The form has novalidate (fields in hidden steps can't show the browser's bubble), so check step by step
+    for (const st of f.querySelectorAll('.ob-step')) {
+      const n = +st.dataset.step;
+      const bad = [...st.querySelectorAll('input, select, textarea')].some(x => !x.checkValidity())
+        || (n === 2 && f.elements.seeking.checked && !picked(f).length);
+      if (bad) { if (st.hidden) goObStep(n); obStepValid(f, n); return; }
+    }
     const skills = picked(f);
     const seeking = !!d.seeking;
     const link = safeUrl(d.link);
-    if (seeking && !skills.length) { toast('כדי להופיע באינדקס, בחר/י לפחות תחום אחד'); return; }
     if (d.link.trim() && !link) { toast('הקישור לא תקין. הדבק כתובת שמתחילה ב־https://'); return; }
     const wasEdit = S.onboardingType === 'edit';
     setBusy(f, true);
@@ -3402,7 +3574,14 @@ document.addEventListener('submit', async e => {
       ...(d.terms ? { terms_accepted_at: new Date().toISOString() } : {})
     })) && await db(sb.from('private_contacts').upsert({ user_id: S.uid, phone: (d.phone || '').trim() }));
     if (!ok) { setBusy(f, false); return; }
+    if (S.obPhoto) {
+      // A photo picked in the form; if it fails, the profile itself is still saved
+      if (await savePhotoBlob(S.obPhoto.blob)) { URL.revokeObjectURL(S.obPhoto.url); S.obPhoto = null; }
+    }
     const imported = wasEdit ? 0 : await importLegacyProjects();
+    clearObDraft();
+    S.obStep = 1;
+    if (!wasEdit) markNudged(); // just saw the photo option in the form, no need for the "new: photos" window
     await loadAll();
     S.onboardingType = null;
     if (!wasEdit) S.tab = 'board';
