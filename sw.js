@@ -32,3 +32,30 @@ self.addEventListener('fetch', e => {
       .catch(() => caches.match('./'))
   );
 });
+
+// Phone notifications (8.11.2026). The server sends {title, body, url, tag}.
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'קול במה', {
+    body: d.body || '',
+    icon: 'icon-192.png',
+    badge: 'favicon-32.png',
+    tag: d.tag || 'kol-bama',
+    renotify: true,
+    dir: 'rtl',
+    lang: 'he',
+    data: { url: d.url || './' }
+  }));
+});
+
+// Tapping the notification opens קול במה (or brings the open window forward) on the right tab
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const mine = list.find(c => new URL(c.url).pathname === new URL(self.registration.scope).pathname);
+    if (mine) return mine.navigate(url).then(c => (c || mine).focus()).catch(() => mine.focus());
+    return self.clients.openWindow(url);
+  }));
+});
