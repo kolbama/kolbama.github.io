@@ -1102,6 +1102,8 @@ const ROLES = {
   set: 'עיצוב תפאורה וחלל / ארט',
   makeup: 'איפור ושיער',
   movement: 'מעצב/ת תנועה',
+  vocal_coach: 'מלווה קולי (להצגות מוזיקליות)',
+  social_mgr: 'מנהל/ת סושיאל',
   dop: 'צילום (DOP / צלם/ת)',
   gaffer: 'תאורה לצילום (גפר)',
   film_sound: 'סאונד בצילומים (בום / הקלטה)',
@@ -1110,8 +1112,8 @@ const ROLES = {
 
 // Groups shown in the profile skills picker
 const ROLE_GROUPS = [
-  ['יצירה והפקה', ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg']],
-  ['במה', ['lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr']],
+  ['יצירה והפקה', ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'social_mgr']],
+  ['במה', ['lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr', 'vocal_coach']],
   ['עיצוב', ['costume', 'set', 'makeup', 'movement']],
   ['קולנוע ווידאו', ['dop', 'gaffer', 'film_sound', 'editor']]
 ];
@@ -1140,8 +1142,8 @@ const REPORT_REASONS = [
 ];
 
 const MEDIA_ROLES = {
-  theater: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr', 'costume', 'set', 'makeup', 'movement'],
-  film: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'dop', 'gaffer', 'film_sound', 'editor', 'sound_design', 'costume', 'set', 'makeup', 'movement']
+  theater: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr', 'vocal_coach', 'costume', 'set', 'makeup', 'movement', 'social_mgr'],
+  film: ['acting', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'dop', 'gaffer', 'film_sound', 'editor', 'sound_design', 'costume', 'set', 'makeup', 'movement', 'social_mgr']
 };
 
 const FORMATS = {
@@ -2247,7 +2249,23 @@ async function loadAll() {
     photo: me.avatar_url || '',
     termsAccepted: !!me.terms_accepted_at
   } : null;
+  // 18+ only: my own birth date lives in a private table. Everyone must have one; people who joined
+  // before this rule are sent to the edit form once to add it.
+  S.hasBirth = true;
+  if (S.user) {
+    const b = await sb.from('private_birth').select('user_id').eq('user_id', S.uid).maybeSingle();
+    if (!b.error) S.hasBirth = !!b.data; // on error (table missing) don't lock anyone out
+    if (!S.hasBirth && S.onboardingType !== 'edit') S.onboardingType = 'edit';
+  }
 }
+
+// Latest birth date that is still 18 or older (YYYY-MM-DD)
+function adultMaxDate() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().slice(0, 10);
+}
+function isAdultDate(v) { return /^\d{4}-\d{2}-\d{2}$/.test(v || '') && v >= '1900-01-01' && v <= adultMaxDate(); }
 
 // Admin-only data (the database refuses these calls for everyone else)
 async function adminLoad() {
@@ -2579,7 +2597,7 @@ function termsHtml() {
     <p>מותר לנו להסיר תוכן ולחסום משתמשים שעוברים על הכללים.</p>
 
     <h4>מי יכול להשתמש</h4>
-    <p>מגיל 18. מתחת לגיל 18 – רק באישור של הורה.</p>
+    <p>האתר מיועד לבני 18 ומעלה בלבד. בהרשמה מוסיפים תאריך לידה (חסוי, לא מוצג לאף אחד), ומי שלא בן/בת 18 לא יכול/ה להירשם. אין באתר פרויקטים או תפקידים לקטינים. מי שנוכח שמשתמש/ת באתר אינו בגיר מתבקש לדווח עליו, ונסיר אותו.</p>
 
     <h4>איזה מידע נשמר ולמה</h4>
     <ul>
@@ -2636,10 +2654,10 @@ function onboarding() {
       ${n < 3 ? `<button type="button" class="btn" data-a="ob-next">הבא ←</button>` : ''}
     </div>` : '';
   return `<div class="wrap" style="max-width:560px;padding-top:24px">
-    <button class="btn ghost sm" data-a="${editing ? 'cancel-edit' : S.isGuest ? 'back-welcome' : 'logout'}">→ חזרה</button>
+    <button class="btn ghost sm" data-a="${editing && S.hasBirth !== false ? 'cancel-edit' : editing ? 'logout' : S.isGuest ? 'back-welcome' : 'logout'}">${editing && S.hasBirth === false ? 'יציאה' : '→ חזרה'}</button>
     <div class="card" style="margin-top:16px;padding:24px">
       <h2 style="font-size:28px">${editing ? 'עריכת הפרופיל שלי' : 'הצטרפות ל״קול במה״'}</h2>
-      <p class="note">פרופיל אחד לכל דבר: אפשר לחפש עבודה וגם לפרסם פרויקטים.</p>
+      <p class="note">${editing && S.hasBirth === false ? 'עדכון חדש: האתר מיועד לבני 18 ומעלה. כדי להמשיך, יש להוסיף תאריך לידה ולאשר.' : 'פרופיל אחד לכל דבר: אפשר לחפש עבודה וגם לפרסם פרויקטים.'}</p>
       <form data-f="onboard" novalidate>
         ${step ? obProgress(step) : ''}
         <div class="ob-step" data-step="1"${hide(1)}>
@@ -2665,6 +2683,10 @@ function onboarding() {
         <label for="ob-phone">מספר טלפון *</label>
         <input id="ob-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" required maxlength="30" value="${esc(prev.phone || '')}" placeholder="050-0000000" aria-describedby="ob-phone-why">
         <p class="note field-why" id="ob-phone-why">${ic('lock')} חסוי. נחשף רק למי שאישר/ה את המועמדות שלך, כדי שיוכלו ליצור קשר.</p>
+        ${S.hasBirth === false || !editing ? `
+        <label for="ob-birth">תאריך לידה *</label>
+        <input id="ob-birth" name="birth" type="date" dir="ltr" required min="1900-01-01" max="${adultMaxDate()}" value="${esc(prev.birth || '')}" aria-describedby="ob-birth-why">
+        <p class="note field-why" id="ob-birth-why">${ic('lock')} האתר מיועד לגילאי 18 ומעלה בלבד. התאריך חסוי, לא מוצג לאף אחד, ואי אפשר לשנות אותו אחרי השמירה.</p>` : ''}
         ${nav(1)}
         </div>
 
@@ -2699,7 +2721,13 @@ function onboarding() {
         ${!editing || !S.user.termsAccepted ? `
           <label class="check">
             <input type="checkbox" name="terms" required>
-            <span>קראתי ואני מסכים/ה ל<button type="button" class="linklike" data-a="terms">תנאי השימוש ומדיניות הפרטיות</button>, כולל שמירת המידע בשרת האחסון. אני בן/בת 18 ומעלה, או שיש לי אישור של הורה.</span>
+            <span>קראתי ואני מסכים/ה ל<button type="button" class="linklike" data-a="terms">תנאי השימוש ומדיניות הפרטיות</button>, כולל שמירת המידע בשרת האחסון.</span>
+          </label>
+        ` : ''}
+        ${S.hasBirth === false || !editing ? `
+          <label class="check">
+            <input type="checkbox" name="adult" required>
+            <span>אני מאשר/ת שאני בן/בת 18 ומעלה.</span>
           </label>
         ` : ''}
 
@@ -2738,16 +2766,19 @@ function mainView() {
     </header>
 
     <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="${S.tab === 'board'}" data-a="tab" data-id="board">
+      ${(() => {
+        const boardTab = `<button role="tab" aria-selected="${S.tab === 'board'}" data-a="tab" data-id="board">
         <span class="ti">${ic('layout-grid')}</span>
         <span class="lbl-long">פרויקטים פתוחים</span><span class="lbl-short">פרויקטים</span>
         <span class="chip count">${S.projects.filter(isOpen).length}</span>
-      </button>
-      <button role="tab" aria-selected="${S.tab === 'pros'}" data-a="tab" data-id="pros">
+      </button>`;
+        const prosTab = `<button role="tab" aria-selected="${S.tab === 'pros'}" data-a="tab" data-id="pros">
         <span class="ti">${ic('users')}</span>
         <span class="lbl-long">אנשי מקצוע</span><span class="lbl-short">אנשי מקצוע</span>
         <span class="chip count">${proCount()}</span>
-      </button>
+      </button>`;
+        return guest ? prosTab + boardTab : boardTab + prosTab; // a guest sees the people first
+      })()}
       ${guest ? '' : `<button role="tab" aria-selected="${S.tab === 'apps'}" data-a="tab" data-id="apps" aria-label="הודעות ומועמדויות${pendingCount ? `, ${pendingCount} חדשות` : ''}">
         <span class="ti">${ic('inbox')}${pendingCount ? `<span class="badge">${pendingCount}</span>` : ''}</span>
         <span class="lbl-long">הודעות ומועמדויות</span><span class="lbl-short">הודעות</span>
@@ -2940,7 +2971,7 @@ function renderTabContent() {
       </article>`).join('');
       return `<div class="ghost-head">
           <h3>${n ? `${n} אנשי מקצוע כבר בפנים` : 'אנשי מקצוע מצטרפים עכשיו'}</h3>
-          <p>תאורה, סאונד, בימוי, משחק ועוד. הירשמו כדי לראות מי הם וליצור קשר.</p>
+          <p>תאורה, סאונד, בימוי, שחקנים ועוד. הירשמו כדי לראות מי הם וליצור קשר.</p>
           <button class="btn" data-a="join" data-id="pro">${ic('user-round')} הצטרפות עם גוגל</button>
         </div>${ghosts}`;
     }
@@ -3964,7 +3995,23 @@ document.addEventListener('submit', async e => {
     const link = safeUrl(d.link);
     if (d.link.trim() && !link) { toast('הקישור לא תקין. הדבק כתובת שמתחילה ב־https://'); return; }
     const wasEdit = S.onboardingType === 'edit';
+    const needBirth = !!f.elements.birth;
+    if (needBirth && !isAdultDate(d.birth)) {
+      goObStep(1);
+      toast('האתר מיועד לגילאי 18 ומעלה בלבד. בדקו את תאריך הלידה.');
+      return;
+    }
     setBusy(f, true);
+    // The birth date goes first: the database refuses a new profile without an adult birth date
+    if (needBirth) {
+      const { error: be } = await sb.from('private_birth').insert({ user_id: S.uid, birth_date: d.birth });
+      if (be && be.code !== '23505') { // 23505 = already saved on an earlier try
+        console.error(be);
+        toast(be.code === '23514' ? 'האתר מיועד לגילאי 18 ומעלה בלבד.' : 'משהו השתבש. אפשר לנסות שוב.');
+        setBusy(f, false);
+        return;
+      }
+    }
     const ok = await db(sb.from('profiles').upsert({
       id: S.uid,
       name: d.name.trim(),
