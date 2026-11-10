@@ -2095,6 +2095,20 @@ async function disablePush() {
   S.pushOn = false;
   toast('ההתראות כובו במכשיר הזה');
 }
+// A standing card at the top of the board until notifications are on (not for blocked / unsupported browsers)
+function pushBanner() {
+  if (!S.user) return '';
+  const st = pushState();
+  if (st !== 'off' && st !== 'ios-install') return '';
+  const btn = st === 'off'
+    ? `<button class="btn sm" data-a="push-on">${ic('bell')} הפעלת התראות</button>`
+    : `<button class="btn sm" data-a="install-open">${ic('download')} הוספה למסך הבית</button>`;
+  return `<div class="card invite-card" style="padding:20px">
+    <h4 style="font-size:18px;margin-bottom:6px">${ic('bell')} לא לפספס פרויקט חדש</h4>
+    <p class="note" style="margin:0 0 10px">${st === 'off' ? 'הפעילו התראות ונשלח לכם הודעה לטלפון כשמפורסם פרויקט שמחפש את התפקיד שלכם, וכשעונים לכם.' : 'באייפון, התראות עובדות רק אחרי הוספת קול במה למסך הבית (דרך Safari). אחרי ההוספה נפעיל אותן.'}</p>
+    ${btn}
+  </div>`;
+}
 function pushCard() {
   const st = pushState();
   const what = `<p class="note" style="margin:0 0 10px">נודיע לך על הודעה חדשה, על מועמדות לפרויקט שלך, על תשובה למועמדות שלך ועל פרויקט חדש שמחפש את התפקיד שלך.</p>`;
@@ -2959,7 +2973,7 @@ function renderTabContent() {
       </div>${inviteCard()}`;
     }
 
-    return (q ? '' : postCard()) + arr.map(projectCard).join('') + inviteCard();
+    return (q ? '' : pushBanner() + postCard()) + arr.map(projectCard).join('') + inviteCard();
   }
 
   if (S.tab === 'pros') {
@@ -3498,11 +3512,22 @@ function maybePhotoNudge() {
 const PUSH_OFFER_KEY = 'kb_push_offer';
 // Two separate one-time offers per account on this device: a few seconds after entering ('entry'),
 // and after the first action ('action'), each with its own key.
-const PUSH_ENTRY_KEY = 'kb_push_offer_entry';
-function pushKey(kind) { return kind === 'entry' ? PUSH_ENTRY_KEY : PUSH_OFFER_KEY; }
+// The 'entry' window comes back up to 3 times (at least 3 days apart) for people who still have notifications off.
+const PUSH_ENTRY_KEY = 'kb_push_entry2';
+function entryInfo() {
+  try { return JSON.parse(localStorage.getItem(PUSH_ENTRY_KEY) || '{}')[S.uid] || [0, 0]; } catch (e) { return [0, 0]; }
+}
+function markEntryShown() {
+  try {
+    const o = JSON.parse(localStorage.getItem(PUSH_ENTRY_KEY) || '{}');
+    o[S.uid] = [(o[S.uid] || [0])[0] + 1, Date.now()];
+    localStorage.setItem(PUSH_ENTRY_KEY, JSON.stringify(o));
+  } catch (e) {}
+}
 function pushOfferSeen(kind = 'action') {
   if (S['pushOffered_' + kind]) return true;
-  try { return JSON.parse(localStorage.getItem(pushKey(kind)) || '[]').includes(S.uid); } catch (e) { return false; }
+  if (kind === 'entry') { const [n, t] = entryInfo(); return n >= 3 || (n > 0 && Date.now() - t < 3 * 864e5); }
+  try { return JSON.parse(localStorage.getItem(PUSH_OFFER_KEY) || '[]').includes(S.uid); } catch (e) { return false; }
 }
 function pushOfferWanted(kind = 'action') {
   if (pushOfferSeen(kind) || pushState() !== 'off') return;
@@ -3514,9 +3539,10 @@ function maybePushOffer() {
   S.pushOfferReady = false;
   if (pushOfferSeen(kind) || pushState() !== 'off') return;
   S['pushOffered_' + kind] = true;
-  try {
-    const seen = JSON.parse(localStorage.getItem(pushKey(kind)) || '[]');
-    if (!seen.includes(S.uid)) localStorage.setItem(pushKey(kind), JSON.stringify([...seen, S.uid].slice(-20)));
+  if (kind === 'entry') markEntryShown();
+  else try {
+    const seen = JSON.parse(localStorage.getItem(PUSH_OFFER_KEY) || '[]');
+    if (!seen.includes(S.uid)) localStorage.setItem(PUSH_OFFER_KEY, JSON.stringify([...seen, S.uid].slice(-20)));
   } catch (e) {}
   S.pushOfferKind = kind;
   S.modal = 'push-offer';
