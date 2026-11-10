@@ -1994,6 +1994,14 @@ function shareModal() {
       <button class="btn ghost" data-a="close">סגירה</button>
     </div>`;
 }
+// A standing card at the top of the board that nudges people to post their own project
+function postCard() {
+  return `<div class="card invite-card" style="padding:20px">
+    <h4 style="font-size:18px;margin-bottom:6px">${ic('drama')} יש לך הצגה או סרט?</h4>
+    <p class="note" style="margin:0 0 10px">פרסמו את הפרויקט ותמצאו צוות: תאורה, סאונד, תלבושות ועוד.</p>
+    <button class="btn sm" data-a="open" data-id="proj">${ic('plus')} פרסום פרויקט</button>
+  </div>`;
+}
 function inviteCard() {
   return `<div class="card invite-card" style="padding:20px">
     <h4 style="font-size:18px;margin-bottom:6px">${ic('users')} מכירים מישהו מהתחום?</h4>
@@ -2089,7 +2097,7 @@ async function disablePush() {
 }
 function pushCard() {
   const st = pushState();
-  const what = `<p class="note" style="margin:0 0 10px">נודיע לך על הודעה חדשה, על מועמדות לפרויקט שלך ועל תשובה למועמדות שלך.</p>`;
+  const what = `<p class="note" style="margin:0 0 10px">נודיע לך על הודעה חדשה, על מועמדות לפרויקט שלך, על תשובה למועמדות שלך ועל פרויקט חדש שמחפש את התפקיד שלך.</p>`;
   let body;
   if (st === 'on') {
     body = `<p class="note" style="margin:0 0 10px">${ic('circle-check')} ההתראות פועלות במכשיר הזה.</p>
@@ -2951,7 +2959,7 @@ function renderTabContent() {
       </div>${inviteCard()}`;
     }
 
-    return arr.map(projectCard).join('') + inviteCard();
+    return (q ? '' : postCard()) + arr.map(projectCard).join('') + inviteCard();
   }
 
   if (S.tab === 'pros') {
@@ -3425,6 +3433,13 @@ function modalView() {
         <button class="btn" data-a="nudge-add">${ic('camera')} הוספת תמונה</button>
         <button class="btn ghost" data-a="close">אחר כך</button>
       </div>`;
+  } else if (m === 'push-offer') {
+    h = `<h3>${ic('bell')} רוצה לדעת כשיענו לך?</h3>
+      <p>נשלח לך התראה לטלפון כשמישהו עונה להודעה, מגיש מועמדות לפרויקט שלך או עונה למועמדות שלך. אפשר לכבות בכל רגע בפרופיל.</p>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" data-a="push-offer-on">${ic('bell')} הפעלת התראות</button>
+        <button class="btn ghost" data-a="close">לא עכשיו</button>
+      </div>`;
   } else if (m === 'share') {
     h = shareModal();
   } else if (m === 'install') {
@@ -3465,6 +3480,29 @@ function maybePhotoNudge() {
   S.modal = 'photo-nudge';
 }
 
+// Offer to turn on phone notifications, once per account on this device, right after a first
+// message / application / published project. The window waits if another window is open.
+const PUSH_OFFER_KEY = 'kb_push_offer';
+function pushOfferSeen() {
+  if (S.pushOffered) return true;
+  try { return JSON.parse(localStorage.getItem(PUSH_OFFER_KEY) || '[]').includes(S.uid); } catch (e) { return false; }
+}
+function pushOfferWanted() {
+  if (pushOfferSeen() || pushState() !== 'off') return;
+  S.pushOfferReady = true;
+}
+function maybePushOffer() {
+  if (!S.pushOfferReady || !S.user || S.modal || S.onboardingType) return;
+  S.pushOfferReady = false;
+  if (pushOfferSeen() || pushState() !== 'off') return;
+  S.pushOffered = true;
+  try {
+    const seen = JSON.parse(localStorage.getItem(PUSH_OFFER_KEY) || '[]');
+    if (!seen.includes(S.uid)) localStorage.setItem(PUSH_OFFER_KEY, JSON.stringify([...seen, S.uid].slice(-20)));
+  } catch (e) {}
+  S.modal = 'push-offer';
+}
+
 function render() {
   if (S.ready && !S.error) markFirstScreen();
   queueMicrotask(() => linkLabels($('#main')));
@@ -3493,6 +3531,7 @@ function render() {
     // Preview link (?intro=name / ?intro=beam) also plays the intro for signed-in people, once
     if (/[?&]intro=/.test(location.search) && !S.introPreviewed) { S.introPreviewed = true; runIntro(() => {}); }
     maybePhotoNudge();
+    maybePushOffer();
     maybeInstallOffer(S.justJoined ? 1500 : 8000);
   }
   renderModal();
@@ -3706,6 +3745,11 @@ document.addEventListener('click', async e => {
   } else if (a === 'push-on' || a === 'push-off') {
     el.disabled = true;
     if (a === 'push-on') await enablePush(); else await disablePush();
+    render();
+  } else if (a === 'push-offer-on') {
+    el.disabled = true;
+    await enablePush();
+    closeModal();
     render();
   } else if (a === 'install-open') {
     openInstallSheet(1);
@@ -4075,6 +4119,7 @@ document.addEventListener('submit', async e => {
     S.modal = null;
     S.editProjId = null;
     S.tab = 'board';
+    if (!editId) pushOfferWanted();
     render();
     toast(editId ? 'השינויים נשמרו' : 'הפרויקט פורסם בלוח');
   } else if (t === 'apply') {
@@ -4090,6 +4135,7 @@ document.addEventListener('submit', async e => {
     await loadAll();
     S.modal = null;
     S.tab = 'apps';
+    pushOfferWanted();
     render();
     toast('המועמדות נשלחה');
   } else if (t === 'report') {
@@ -4132,7 +4178,7 @@ document.addEventListener('submit', async e => {
       project_id: S.chat.projId || null,
       body: txt
     }), 'ההודעה לא נשלחה. אפשר לנסות שוב.');
-    if (ok) await loadAll();
+    if (ok) { await loadAll(); pushOfferWanted(); }
     renderModal();
     const i = $('#modal input[name="msg"]');
     if (i) { if (!ok) i.value = txt; i.focus(); }
