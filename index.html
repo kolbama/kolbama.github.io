@@ -2987,7 +2987,8 @@ function renderTabContent() {
     }
     const arr = S.pros.filter(p => hit(p.name, p.loc, p.region, p.past, p.studioOrGear)
       && (S.role === 'all' || skillsOf(p).includes(S.role))
-      && (S.region === 'all' || p.region === S.region));
+      && (S.region === 'all' || p.region === S.region))
+      .sort((a, b) => !!b.photo - !!a.photo); // people with a profile photo first (stable: same order otherwise)
     if (!arr.length) {
       return `<div class="empty">
         <span class="empty-ic">${ic('users')}</span>
@@ -3433,9 +3434,21 @@ function modalView() {
         <button class="btn" data-a="nudge-add">${ic('camera')} הוספת תמונה</button>
         <button class="btn ghost" data-a="close">אחר כך</button>
       </div>`;
+  } else if (m === 'post-nudge') {
+    h = `<h3>${ic('drama')} ${esc(POST_NUDGE.title)}</h3>
+      <p>${esc(POST_NUDGE.body)}</p>
+      <p class="note" style="margin:0">צוות ״קול במה״</p>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסום פרויקט</button>
+        <button class="btn ghost" data-a="close">אחר כך</button>
+      </div>`;
   } else if (m === 'push-offer') {
-    h = `<h3>${ic('bell')} רוצה לדעת כשיענו לך?</h3>
-      <p>נשלח לך התראה לטלפון כשמישהו עונה להודעה, מגיש מועמדות לפרויקט שלך או עונה למועמדות שלך. אפשר לכבות בכל רגע בפרופיל.</p>
+    h = S.pushOfferKind === 'entry'
+      ? `<h3>${ic('bell')} לא לפספס פרויקט חדש</h3>
+      <p>נשלח לך התראה לטלפון כשמפורסם פרויקט שמחפש את התפקיד שלך, וגם כשעונים לך או מגישים מועמדות לפרויקט שלך. אפשר לכבות בכל רגע בפרופיל.</p>`
+      : `<h3>${ic('bell')} רוצה לדעת כשיענו לך?</h3>
+      <p>נשלח לך התראה לטלפון כשמישהו עונה להודעה, מגיש מועמדות לפרויקט שלך או עונה למועמדות שלך. אפשר לכבות בכל רגע בפרופיל.</p>`;
+    h += `
       <div class="row" style="margin-top:16px">
         <button class="btn" data-a="push-offer-on">${ic('bell')} הפעלת התראות</button>
         <button class="btn ghost" data-a="close">לא עכשיו</button>
@@ -3483,25 +3496,44 @@ function maybePhotoNudge() {
 // Offer to turn on phone notifications, once per account on this device, right after a first
 // message / application / published project. The window waits if another window is open.
 const PUSH_OFFER_KEY = 'kb_push_offer';
-function pushOfferSeen() {
-  if (S.pushOffered) return true;
-  try { return JSON.parse(localStorage.getItem(PUSH_OFFER_KEY) || '[]').includes(S.uid); } catch (e) { return false; }
+// Two separate one-time offers per account on this device: a few seconds after entering ('entry'),
+// and after the first action ('action'), each with its own key.
+const PUSH_ENTRY_KEY = 'kb_push_offer_entry';
+function pushKey(kind) { return kind === 'entry' ? PUSH_ENTRY_KEY : PUSH_OFFER_KEY; }
+function pushOfferSeen(kind = 'action') {
+  if (S['pushOffered_' + kind]) return true;
+  try { return JSON.parse(localStorage.getItem(pushKey(kind)) || '[]').includes(S.uid); } catch (e) { return false; }
 }
-function pushOfferWanted() {
-  if (pushOfferSeen() || pushState() !== 'off') return;
-  S.pushOfferReady = true;
+function pushOfferWanted(kind = 'action') {
+  if (pushOfferSeen(kind) || pushState() !== 'off') return;
+  S.pushOfferReady = kind;
 }
 function maybePushOffer() {
   if (!S.pushOfferReady || !S.user || S.modal || S.onboardingType) return;
+  const kind = S.pushOfferReady;
   S.pushOfferReady = false;
-  if (pushOfferSeen() || pushState() !== 'off') return;
-  S.pushOffered = true;
+  if (pushOfferSeen(kind) || pushState() !== 'off') return;
+  S['pushOffered_' + kind] = true;
   try {
-    const seen = JSON.parse(localStorage.getItem(PUSH_OFFER_KEY) || '[]');
-    if (!seen.includes(S.uid)) localStorage.setItem(PUSH_OFFER_KEY, JSON.stringify([...seen, S.uid].slice(-20)));
+    const seen = JSON.parse(localStorage.getItem(pushKey(kind)) || '[]');
+    if (!seen.includes(S.uid)) localStorage.setItem(pushKey(kind), JSON.stringify([...seen, S.uid].slice(-20)));
   } catch (e) {}
+  S.pushOfferKind = kind;
   S.modal = 'push-offer';
 }
+// A few seconds after entering, once per session: ask people with notifications off (once per account).
+function schedulePushEntryOffer() {
+  if (S.pushEntryTimer || !S.user) return;
+  S.pushEntryTimer = setTimeout(() => {
+    pushOfferWanted('entry');
+    if (S.ready && S.user && !S.modal && !S.onboardingType) { maybePushOffer(); renderModal(); }
+  }, 20000);
+}
+// Personal note right after signing up: encourage posting a project
+const POST_NUDGE = {
+  title: 'יש לך הצגה או סרט?',
+  body: 'היי, שמחים שהצטרפת ל״קול במה״! אם יש לך פרויקט שמחפש צוות, כמו תאורה, סאונד, תלבושות או שחקנים, אפשר לפרסם אותו עכשיו בשלושה צעדים קצרים, ואנשי מקצוע מהתחום יראו אותו.'
+};
 
 function render() {
   if (S.ready && !S.error) markFirstScreen();
@@ -3532,6 +3564,7 @@ function render() {
     if (/[?&]intro=/.test(location.search) && !S.introPreviewed) { S.introPreviewed = true; runIntro(() => {}); }
     maybePhotoNudge();
     maybePushOffer();
+    schedulePushEntryOffer();
     maybeInstallOffer(S.justJoined ? 1500 : 8000);
   }
   renderModal();
@@ -4084,6 +4117,7 @@ document.addEventListener('submit', async e => {
     await loadAll();
     S.onboardingType = null;
     if (!wasEdit) S.tab = 'board';
+    if (!wasEdit) S.modal = 'post-nudge';
     render();
     toast(wasEdit ? 'הפרופיל עודכן'
       : imported ? `ברוך הבא! ${imported} פרויקטים שפרסמת בעבר הועלו ללוח.` : 'ברוך הבא ל״קול במה״!');
