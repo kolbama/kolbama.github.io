@@ -1038,6 +1038,11 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 .ob-photo-circle.has-img { border-style: solid; border-color: var(--gold); }
 .ob-photo-circle .ob-photo-empty { display: grid; justify-items: center; gap: 4px; padding: 8px; }
 .ob-photo .note { margin: 0; }
+/* The photo is part of step 1, not a side extra: bigger, gold, bold */
+.ob-photo { margin: 6px 0 4px; }
+.ob-photo-circle { width: 132px; height: 132px; border: 2px dashed var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--card)); color: var(--tx, inherit); font-size: 15px; font-weight: 600; }
+.ob-photo-circle .ob-photo-empty svg { width: 30px; height: 30px; color: var(--gold); }
+.ob-photo-circle:hover { background: color-mix(in srgb, var(--gold) 18%, var(--card)); }
 /* Signup steps: progress bar on top, Back / Next at the bottom */
 .ob-progress { margin: 14px 0 4px; }
 .ob-progress-txt { font-size: 14px; color: var(--mut); margin-bottom: 6px; }
@@ -1340,7 +1345,7 @@ function obPhotoPicker() {
       ${src ? `<img src="${esc(src)}" alt="">` : `<span class="ob-photo-empty">${ic('camera')}<span>הוספת תמונה</span></span>`}
       <input type="file" accept="image/*" data-ob-photo class="vh">
     </label>
-    <p class="note">${src ? 'לחיצה על התמונה מחליפה אותה' : 'רשות. אפשר להוסיף גם אחר כך'}</p>
+    ${src ? `<p class="note">לחיצה על התמונה מחליפה אותה</p>` : ''}
   </div>`;
 }
 
@@ -2718,8 +2723,8 @@ function onboarding() {
       <form data-f="onboard" novalidate>
         ${step ? obProgress(step) : ''}
         <div class="ob-step" data-step="1"${hide(1)}>
-        ${obPhotoPicker()}
         <div class="fs-title"><span>1</span>פרטים אישיים</div>
+        ${obPhotoPicker()}
         <div class="grid2">
           <div>
             <label>שם מלא *</label>
