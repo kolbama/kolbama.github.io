@@ -1084,9 +1084,10 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 .ov.chat-ov .dlg { display: flex; flex-direction: column; max-width: 640px; height: min(780px, 88svh); max-height: none; overflow: hidden; }
 .ov.chat-ov .msgs { flex: 1; height: auto; min-height: 0; }
 .ov.chat-ov form[data-f="chat"] { flex: none; }
+html:has(.ov.chat-ov), html:has(.ov.chat-ov) body { overflow: hidden; } /* the page behind the chat does not scroll */
 @media (max-width: 760px) {
   .ov.chat-ov { padding: 0; align-items: stretch; }
-  .ov.chat-ov .dlg { max-width: none; height: 100dvh; border: 0; border-radius: 0; padding: calc(12px + env(safe-area-inset-top)) 14px calc(10px + env(safe-area-inset-bottom)); }
+  .ov.chat-ov .dlg { max-width: none; height: 100%; border: 0; border-radius: 0; padding: calc(12px + env(safe-area-inset-top)) 14px calc(10px + env(safe-area-inset-bottom)); }
   .ov.chat-ov .msgs { margin: 10px -6px; }
 }
 </style>
@@ -3672,6 +3673,7 @@ function renderModal() {
   $('#modal').innerHTML = modalView();
   const m = $('#msgs');
   if (m) m.scrollTop = m.scrollHeight;
+  fitChat();
   // Remember the untouched form, so we can tell later whether the person typed anything
   const f = FORM_MODALS.includes(S.modal) ? $('.dlg form[data-f]') : null;
   S.snap = f ? formSnap(f) : null;
@@ -3689,6 +3691,23 @@ function renderModal() {
   }
   if (closing) restoreFocus();
   syncModalHistory();
+}
+
+// Full-page chat on a phone: keep it exactly inside the part of the screen above the keyboard.
+// (iPhone does not shrink the page when the keyboard opens; it slides the page up instead.)
+function fitChat() {
+  const ov = document.querySelector('.ov.chat-ov');
+  const v = window.visualViewport;
+  if (!ov || !v || !matchMedia('(max-width: 760px)').matches) return;
+  ov.style.top = v.offsetTop + 'px';
+  ov.style.height = v.height + 'px';
+  ov.style.bottom = 'auto';
+  const m = document.getElementById('msgs');
+  if (m) m.scrollTop = m.scrollHeight;
+}
+if (window.visualViewport) {
+  visualViewport.addEventListener('resize', fitChat);
+  visualViewport.addEventListener('scroll', fitChat);
 }
 
 // After a window closes, keyboard focus goes back to the button that opened it. If the screen was
@@ -4064,8 +4083,9 @@ document.addEventListener('click', async e => {
     S.chat = { otherId, projId: el.dataset.proj || null };
     S.modal = 'chat';
     renderModal();
+    // On a phone, don't pop the keyboard by itself: it pushed the whole chat up on iPhone
     const i = $('#modal input[name="msg"]');
-    if (i) i.focus();
+    if (i && !matchMedia('(pointer: coarse)').matches) i.focus();
   } else if (a === 'del') {
     const p = S.projects.find(x => x.id == id);
     if (!p || !isMine(p)) return;
