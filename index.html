@@ -11,6 +11,7 @@
 <meta name="theme-color" content="#100508">
 <meta name="description" content="לוח פרויקטים חינמי לתיאטרון וקולנוע: מוצאים שחקנים, תאורנים, צלמים, אנשי סאונד ועוד, או את ההפקה הבאה שלכם.">
 <link rel="canonical" href="https://kolbama.github.io/">
+<meta name="google-site-verification" content="sfxm_-oXzDeeabZIJTCxK88MkpWVW1FhLXQwV5MnkkA">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"קול במה","alternateName":"Kol Bama","url":"https://kolbama.github.io/","inLanguage":"he","description":"לוח פרויקטים חינמי לתיאטרון וקולנוע: מוצאים שחקנים, תאורנים, צלמים, אנשי סאונד ועוד, או את ההפקה הבאה שלכם."}
 </script>
@@ -1135,6 +1136,25 @@ const REGIONS = [
   'אונליין / כל הארץ'
 ];
 
+// Typing a known city fills in the region by itself (the list stays, to change or for unknown places)
+const CITY_REGION = (() => {
+  const g = {
+    'ירושלים והסביבה': 'ירושלים,מבשרת ציון,בית שמש,מעלה אדומים,גבעת זאב,אבו גוש,צור הדסה,קריית ענבים,אפרת,ביתר עילית,מוצא',
+    'תל אביב והמרכז': 'תל אביב,תל אביב יפו,יפו,תא,רמת גן,גבעתיים,בני ברק,חולון,בת ים,פתח תקווה,פתח תקוה,פת,ראש העין,אור יהודה,קריית אונו,יהוד,יהוד מונוסון,גבעת שמואל,שוהם,אלעד,לוד,רמלה,מודיעין,מודיעין מכבים רעות,אזור',
+    'השרון': 'הרצליה,רעננה,כפר סבא,הוד השרון,נתניה,רמת השרון,כפר יונה,אבן יהודה,קדימה,קדימה צורן,טייבה,טירה,חדרה,אור עקיבא',
+    'השפלה': 'ראשון לציון,ראשלצ,רחובות,נס ציונה,יבנה,אשדוד,גדרה,קריית עקרון,מזכרת בתיה,באר יעקב,גן יבנה,קריית מלאכי',
+    'חיפה והצפון': 'חיפה,קריית ביאליק,קריית מוצקין,קריית ים,קריית אתא,נשר,טירת כרמל,עכו,נהריה,כרמיאל,נצרת,נוף הגליל,עפולה,טבריה,צפת,קריית שמונה,יקנעם,יקנעם עילית,זכרון יעקב,פרדס חנה,פרדס חנה כרכור,בית שאן,מעלות,מעלות תרשיחא,שפרעם,אום אל פחם,קריית טבעון,רמת ישי,מגדל העמק,עין הוד',
+    'באר שבע והדרום': 'באר שבע,בש,אשקלון,קריית גת,שדרות,נתיבות,אופקים,דימונה,ערד,ירוחם,מצפה רמון,אילת,רהט,עומר,מיתר,להבים'
+  };
+  const m = {};
+  for (const [r, list] of Object.entries(g)) list.split(',').forEach(c => { m[c] = r; });
+  return m;
+})();
+function regionForCity(s) {
+  const k = String(s || '').replace(/["'״׳]/g, '').replace(/[-–־]/g, ' ').replace(/קרית/g, 'קריית').replace(/\s+/g, ' ').trim();
+  return CITY_REGION[k] || '';
+}
+
 const REPORT_REASONS = [
   'תוכן פוגעני או לא הולם',
   'הטרדה',
@@ -1366,6 +1386,19 @@ function goProjStep(f, n) {
 }
 
 // Is everything required in this step filled in? If not, point at the first missing field
+// The phone is not asked at signup. The first application / new project asks for it once.
+function phoneAsk() {
+  if (S.user && S.user.phone) return '';
+  return `<label for="ask-phone">מספר טלפון *</label>
+    <input id="ask-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" required minlength="9" maxlength="30" placeholder="050-0000000" aria-describedby="ask-phone-why">
+    <p class="note field-why" id="ask-phone-why">${ic('lock')} חסוי. נחשף רק אחרי אישור, כדי שתוכלו ליצור קשר. שואלים רק פעם אחת.</p>`;
+}
+async function savePhoneIfAsked(d) {
+  if (!('phone' in d)) return true;
+  const ok = await db(sb.from('private_contacts').upsert({ user_id: S.uid, phone: d.phone.trim() }));
+  if (ok) { S.phones[S.uid] = d.phone.trim(); if (S.user) S.user.phone = d.phone.trim(); }
+  return ok;
+}
 function obStepValid(f, n) {
   const st = f.querySelector(`.ob-step[data-step="${n}"]`);
   const bad = [...st.querySelectorAll('input, select, textarea')].find(x => !x.checkValidity());
@@ -2625,9 +2658,9 @@ function termsHtml() {
 
     <h4>איזה מידע נשמר ולמה</h4>
     <ul>
-      <li><b>שם, עיר, אזור, תחומים וניסיון</b> (חובה) – כדי שיוכלו למצוא אותך ולהבין מה את/ה עושה.</li>
-      <li><b>מספר טלפון</b> (חובה) – כדי שמי שאישר/ה את המועמדות שלך יוכל/תוכל ליצור קשר. חסוי עד האישור.</li>
-      <li><b>ציוד וקישור לתיק עבודות</b> (רשות) – רק אם רוצים להציג אותם.</li>
+      <li><b>שם, עיר, אזור ותחומים</b> (חובה) – כדי שיוכלו למצוא אותך ולהבין מה את/ה עושה.</li>
+      <li><b>מספר טלפון</b> (חובה כשמגישים מועמדות או מפרסמים פרויקט) – כדי שמי שאישר/ה את המועמדות שלך יוכל/תוכל ליצור קשר. חסוי עד האישור.</li>
+      <li><b>ניסיון, ציוד וקישור לתיק עבודות</b> (רשות) – רק אם רוצים להציג אותם.</li>
       <li><b>תמונת פרופיל</b> (רשות) – מוקטנת לפני השמירה, וכל מידע נסתר שבתוך התמונה (כמו המיקום שבו צולמה) נמחק. אפשר להחליף או להסיר בכל רגע.</li>
       <li><b>כתובת המייל של חשבון הגוגל</b> – רק לכניסה לאתר. לא מוצגת לאף אחד.</li>
       <li><b>פרויקטים, מועמדויות והודעות</b> – מה שכותבים באתר.</li>
@@ -2704,9 +2737,10 @@ function onboarding() {
           ${opts(REGIONS, prev.region || undefined)}
         </select>
 
-        <label for="ob-phone">מספר טלפון *</label>
-        <input id="ob-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" required maxlength="30" value="${esc(prev.phone || '')}" placeholder="050-0000000" aria-describedby="ob-phone-why">
-        <p class="note field-why" id="ob-phone-why">${ic('lock')} חסוי. נחשף רק למי שאישר/ה את המועמדות שלך, כדי שיוכלו ליצור קשר.</p>
+        ${editing ? `
+        <label for="ob-phone">מספר טלפון</label>
+        <input id="ob-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" maxlength="30" value="${esc(prev.phone || '')}" placeholder="050-0000000" aria-describedby="ob-phone-why">
+        <p class="note field-why" id="ob-phone-why">${ic('lock')} חסוי. נחשף רק למי שאישר/ה את המועמדות שלך, כדי שיוכלו ליצור קשר.</p>` : ''}
         ${S.hasBirth === false || !editing ? `
         <label for="ob-birth">תאריך לידה *</label>
         <input id="ob-birth" name="birth" type="date" dir="ltr" required min="1900-01-01" max="${adultMaxDate()}" value="${esc(prev.birth || '')}" aria-describedby="ob-birth-why">
@@ -2733,11 +2767,11 @@ function onboarding() {
 
         <div class="ob-step" data-step="3"${hide(3)}>
         <div class="fs-title"><span>3</span>ניסיון וקישורים</div>
-        <label>מסגרת, ציוד או כלים שיש לך ניסיון איתם</label>
-        <input name="studioOrGear" maxlength="300" value="${esc(prev.studioOrGear || '')}" placeholder="למשל: סטודיו למשחק, grandMA, QLab, מצלמת קולנוע, תפירה…">
-
-        <label>ניסיון קודם והפקות שהשתתפת בהן *</label>
-        <textarea name="past" rows="3" required maxlength="2000" placeholder="בקצרה: הצגות, סרטים, תרגילים או הפקות שהשתתפת בהן…">${esc(prev.past || '')}</textarea>
+        ${editing && prev.studioOrGear ? `
+        <label>מסגרת, ציוד או כלים <span style="color:var(--mut);font-weight:400">(לא חובה)</span></label>
+        <input name="studioOrGear" maxlength="300" value="${esc(prev.studioOrGear || '')}">` : ''}
+        <label>ניסיון קודם והפקות שהשתתפת בהן <span style="color:var(--mut);font-weight:400">${!editing ? '(אפשר לדלג ולהשלים אחר כך)' : '(לא חובה)'}</span></label>
+        <textarea name="past" rows="3" maxlength="2000" placeholder="בקצרה: הצגות, סרטים, תרגילים או הפקות שהשתתפת בהן…">${esc(prev.past || '')}</textarea>
 
         <label>קישור לתיק עבודות / אינסטגרם / שואוריל</label>
         <input name="link" inputmode="url" dir="ltr" autocomplete="url" spellcheck="false" maxlength="300" value="${esc(prev.link || '')}" placeholder="https://instagram.com/…">
@@ -2745,7 +2779,7 @@ function onboarding() {
         ${!editing || !S.user.termsAccepted ? `
           <label class="check">
             <input type="checkbox" name="terms" required>
-            <span>קראתי ואני מסכים/ה ל<button type="button" class="linklike" data-a="terms">תנאי השימוש ומדיניות הפרטיות</button>, כולל שמירת המידע בשרת האחסון.</span>
+            <span>קראתי ואני מסכים/ה ל<button type="button" class="linklike" data-a="terms">תנאי השימוש ומדיניות הפרטיות</button>.</span>
           </label>
         ` : ''}
         ${S.hasBirth === false || !editing ? `
@@ -3030,7 +3064,7 @@ function renderTabContent() {
             <span>${ic('map-pin')} ${esc(p.loc)}${p.region ? ` (${esc(p.region)})` : ''}</span>
             ${p.studioOrGear ? `<span>${ic('sliders-horizontal')} <b>ציוד/כלים:</b> ${esc(p.studioOrGear)}</span>` : ''}
           </div>
-          <div><b>ניסיון והפקות קודמות:</b> ${esc(p.past)}</div>
+          ${p.past ? `<div><b>ניסיון והפקות קודמות:</b> ${esc(p.past)}</div>` : ''}
           ${link ? `<div>${link}</div>` : ''}
           <div class="row" style="margin-top:6px">
             ${mine
@@ -3088,7 +3122,7 @@ function renderTabContent() {
         </div>
         <div class="bd">
           ${a.applicantGear ? `<div class="meta">${ic('sliders-horizontal')} <b>ציוד / מסגרת:</b> ${esc(a.applicantGear)}</div>` : ''}
-          <div><b>ניסיון קודם:</b> ${esc(a.applicantPast)}</div>
+          ${a.applicantPast ? `<div><b>ניסיון קודם:</b> ${esc(a.applicantPast)}</div>` : ''}
           ${link ? `<div>${link}</div>` : ''}
           <div style="background:var(--in);padding:10px 12px;border-radius:10px;border:1px solid var(--line)">
             ${ic('message-circle')} <b>הודעת המועמד:</b> "${esc(a.note)}"
@@ -3215,7 +3249,7 @@ function renderTabContent() {
         ${skills.length ? `<div class="need-tags">${skills.map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>` : ''}
         <p class="meta" style="margin:10px 0 14px">${ic('map-pin')} ${esc(u.loc)}${u.region ? ` (${esc(u.region)})` : ''} · ${ic('lock')} טלפון לאישור: ${esc(u.phone || 'לא הוזן')}</p>
         ${u.studioOrGear ? `<p><b>מסגרת / ציוד וכלים:</b> ${esc(u.studioOrGear)}</p>` : ''}
-        <p><b>ניסיון והפקות קודמות:</b> ${esc(u.past)}</p>
+        ${u.past ? `<p><b>ניסיון והפקות קודמות:</b> ${esc(u.past)}</p>` : ''}
         ${link ? `<p>${link}</p>` : ''}
       </div>
 
@@ -3338,6 +3372,7 @@ function modalView() {
         <label>מפרט טכני / דגשים לאולם או ללוקיישן (רשות)</label>
         <input name="tech" maxlength="500" value="${esc(editing ? editing.tech : '')}" placeholder="למשל: grandMA dot2 באולם / צילומי לילה בחוץ…">
 
+        ${!editing ? phoneAsk() : ''}
         <div class="row${step ? ' ob-nav' : ''}" style="margin-top:16px">
           ${step ? `<button type="button" class="btn ghost" data-a="proj-prev">→ הקודם</button>` : ''}
           <button class="btn">${editing ? 'שמירת השינויים' : 'פרסום הפרויקט בלוח'}</button>
@@ -3356,6 +3391,7 @@ function modalView() {
         <select name="role">${rolesArr.map(r => `<option value="${esc(r)}"${r === mySkill ? ' selected' : ''}>${esc(ROLES[r] || r)}</option>`).join('')}</select>
         <label>הודעה קצרה ליוצר *</label>
         <textarea name="note" rows="3" required maxlength="1000" placeholder="היי! ראיתי את הפרויקט שלכם, אני זמין בתאריכים האלו ויש לי ניסיון מתאים…"></textarea>
+        ${phoneAsk()}
         <div class="row" style="margin-top:16px">
           <button class="btn">שליחת המועמדות לאישור</button>
           <button type="button" class="btn ghost" data-a="close">ביטול</button>
@@ -4073,7 +4109,15 @@ document.addEventListener('change', e => {
   $('#role-picker').innerHTML = pills(MEDIA_ROLES[m], picked(f));
 });
 
+document.addEventListener('change', e => {
+  if (e.target.name === 'region' && e.target.closest('form')) e.target.dataset.manual = '1';
+});
 document.addEventListener('input', e => {
+  if (e.target.name === 'loc' && e.target.form) {
+    const sel = e.target.form.elements.region;
+    const r = regionForCity(e.target.value);
+    if (sel && r && !sel.dataset.manual) sel.value = r;
+  }
   const k = e.target.dataset && e.target.dataset.k;
   if (!k) return;
   S[k] = e.target.value;
@@ -4124,12 +4168,12 @@ document.addEventListener('submit', async e => {
       region: d.region,
       skills,
       seeking,
-      studio_or_gear: (d.studioOrGear || '').trim(),
+      ...('studioOrGear' in d ? { studio_or_gear: d.studioOrGear.trim() } : {}),
       past: d.past.trim(),
       link,
       updated_at: new Date().toISOString(),
       ...(d.terms ? { terms_accepted_at: new Date().toISOString() } : {})
-    })) && await db(sb.from('private_contacts').upsert({ user_id: S.uid, phone: (d.phone || '').trim() }));
+    })) && ('phone' in d || !wasEdit ? await db(sb.from('private_contacts').upsert({ user_id: S.uid, phone: (d.phone || '').trim() })) : true);
     if (!ok) { setBusy(f, false); return; }
     if (S.obPhoto) {
       // A photo picked in the form; if it fails, the profile itself is still saved
@@ -4171,6 +4215,7 @@ document.addEventListener('submit', async e => {
     };
     const editId = S.editProjId;
     setBusy(f, true);
+    if (!(await savePhoneIfAsked(d))) { setBusy(f, false); return; }
     const ok = await db(editId
       ? sb.from('projects').update(row).eq('id', editId)
       : sb.from('projects').insert(row));
@@ -4186,6 +4231,7 @@ document.addEventListener('submit', async e => {
     const proj = S.projects.find(x => x.id == S.applyProjId);
     if (!proj || hasApplied(proj.id)) { closeModal(); return; }
     setBusy(f, true);
+    if (!(await savePhoneIfAsked(d))) { setBusy(f, false); return; }
     const { error } = await sb.from('applications').insert({ project_id: proj.id, role: d.role, note: d.note.trim() });
     if (error) {
       setBusy(f, false);
