@@ -1067,7 +1067,7 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 .members-card .mc-faces .avatar { margin-inline-start: -8px; border: 2px solid #b51f35; box-sizing: content-box; }
 .members-card .mc-txt b { display: block; font-size: 18px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .members-card .mc-txt span { font-size: 13px; opacity: .9; }
-@media (max-width: 420px) { .members-card { padding: 12px 14px; gap: 10px; } }
+@media (max-width: 420px) { .members-card { padding: 12px 14px; gap: 10px; } .stats-strip { gap: 6px; } .stats-strip > div { padding: 10px 8px; } .stats-strip span { font-size: 12px; } }
 .ghost-head { text-align: center; padding: 8px 0 20px; grid-column: 1 / -1; }
 .ghost-head h3 { font-family: var(--font-display); font-weight: 400; font-size: 28px; color: var(--tx); margin: 0 0 6px; }
 .ghost-head p { color: var(--mut); margin: 0 0 16px; }
@@ -2576,7 +2576,7 @@ function welcome() {
       <p class="tagline" data-rise style="--i:2">מרימים הצגה או סרט? מחפשים עבודה? נפגשים כאן.</p>
       <p class="sub" data-rise style="--i:3">חיבור ישיר בין שחקנים, במאים ויוצרים לבין אנשי תאורה, סאונד, צילום, תלבושות, תפאורה והפקה.</p>
       ${open + pros + matches > 0
-        ? `<div class="stats-strip" data-rise style="--i:4">${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${stat(matches, 'חיבורים שנוצרו')}</div>`
+        ? `<div class="stats-strip" data-rise style="--i:4">${S.memberTotal > pros ? stat(S.memberTotal, 'חברים באתר') : ''}${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${stat(matches, 'חיבורים שנוצרו')}</div>`
         : `<p class="fresh" data-rise style="--i:4">${ic('sparkles')} הלוח חדש. מי שמצטרפים עכשיו מופיעים בו ראשונים.</p>`}
     </div>
     <div class="pick">
