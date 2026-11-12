@@ -1080,6 +1080,15 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 .ghost-city { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--mut); }
 .ghost-city .ic { width: 14px; height: 14px; }
 .ghost-card .need-tags { filter: none; }
+/* Chat: a tall window on a computer, a full page on a phone (like WhatsApp) */
+.ov.chat-ov .dlg { display: flex; flex-direction: column; max-width: 640px; height: min(780px, 88svh); max-height: none; overflow: hidden; }
+.ov.chat-ov .msgs { flex: 1; height: auto; min-height: 0; }
+.ov.chat-ov form[data-f="chat"] { flex: none; }
+@media (max-width: 760px) {
+  .ov.chat-ov { padding: 0; align-items: stretch; }
+  .ov.chat-ov .dlg { max-width: none; height: 100dvh; border: 0; border-radius: 0; padding: calc(12px + env(safe-area-inset-top)) 14px calc(10px + env(safe-area-inset-bottom)); }
+  .ov.chat-ov .msgs { margin: 10px -6px; }
+}
 </style>
 </head>
 <body>
@@ -3540,7 +3549,7 @@ function modalView() {
       </div>`;
   }
 
-  return `<div class="ov" data-a="ovl"><div class="dlg" role="dialog" aria-modal="true">${h}</div></div>`;
+  return `<div class="ov${m === 'chat' ? ' chat-ov' : ''}" data-a="ovl"><div class="dlg" role="dialog" aria-modal="true">${h}</div></div>`;
 }
 
 // One-time window for people who joined before signup had a photo: "you can add a photo now".
