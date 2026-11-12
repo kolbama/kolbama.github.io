@@ -1062,9 +1062,16 @@ html.te-on [contenteditable="true"]:hover, html.te-on [contenteditable="true"]:f
 .medium-card input:checked + span { border-color: var(--gold); background: var(--gold-bg); }
 .medium-card input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
 /* Guest teaser in the people tab: blurred cards, only professions are readable */
+.members-card { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 14px 18px; margin-bottom: 14px; border-radius: 16px; color: #fff8ec; background: linear-gradient(135deg, #c8283c, #9c1529); box-shadow: 0 6px 18px rgba(122, 20, 48, .25); }
+.members-card .mc-faces { display: flex; flex-shrink: 0; padding-inline-start: 8px; }
+.members-card .mc-faces .avatar { margin-inline-start: -8px; border: 2px solid #b51f35; box-sizing: content-box; }
+.members-card .mc-txt b { display: block; font-size: 18px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.members-card .mc-txt span { font-size: 13px; opacity: .9; }
+@media (max-width: 420px) { .members-card { padding: 12px 14px; gap: 10px; } }
 .ghost-head { text-align: center; padding: 8px 0 20px; grid-column: 1 / -1; }
 .ghost-head h3 { font-family: var(--font-display); font-weight: 400; font-size: 28px; color: var(--tx); margin: 0 0 6px; }
 .ghost-head p { color: var(--mut); margin: 0 0 16px; }
+.ghost-head p.ghost-sub { color: var(--tx); font-weight: 500; margin: -2px 0 8px; }
 .ghost-card { padding: 16px; pointer-events: none; user-select: none; }
 .ghost-card .who { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .ghost-av, .ghost-name { display: block; background: var(--line); filter: blur(5px); }
@@ -2198,6 +2205,16 @@ function toast(msg) {
 // ───────────── Database ─────────────
 
 const proCount = () => (S.guestPeople || S.pros).length;
+// Card at the top of the people tab (members only): how many people are on the site, with a few photos
+function membersCard() {
+  const all = Object.values(S.profiles || {}).filter(p => p && p.name);
+  if (all.length < 2) return '';
+  const faces = all.filter(p => (p.avatar_url || '').startsWith(AVATAR_PREFIX)).slice(0, 4);
+  return `<div class="members-card">
+    ${faces.length ? `<div class="mc-faces" aria-hidden="true">${faces.map(p => avatar(p.name, 30, p.avatar_url)).join('')}</div>` : ''}
+    <div class="mc-txt"><b>${all.length} אנשים בקול במה</b><span>מתוכם ${proCount()} אנשי מקצוע שמחפשים עבודה</span></div>
+  </div>`;
+}
 const nameOf = id => (S.profiles[id] && S.profiles[id].name) || 'משתמש/ת';
 
 function toProject(r) {
@@ -2286,8 +2303,9 @@ async function loadAll() {
   // looking for work, and the names of project owners (those names are on the project cards anyway).
   S.guestPeople = null;
   if (S.isGuest && !S.profiles[S.uid]) {
-    const [gp, go] = await Promise.all([sb.rpc('guest_people'), sb.rpc('guest_owners')]);
+    const [gp, go, mc] = await Promise.all([sb.rpc('guest_people'), sb.rpc('guest_owners'), sb.rpc('member_count')]);
     if (!gp.error) S.guestPeople = gp.data || [];
+    S.memberTotal = !mc.error && typeof mc.data === 'number' ? mc.data : null; // null until the SQL is run
     if (!go.error) (go.data || []).forEach(o => { if (!S.profiles[o.id]) S.profiles[o.id] = o; });
   }
   S.phones = Object.fromEntries(contacts.map(c => [c.user_id, c.phone]));
@@ -3033,7 +3051,8 @@ function renderTabContent() {
         <div class="need-tags">${skillsOf(p).slice(0, 3).map(s => `<span class="role-tag">${esc(ROLES[s] || s)}</span>`).join('')}</div>
       </article>`).join('');
       return `<div class="ghost-head">
-          <h3>${n ? `${n} אנשי מקצוע כבר בפנים` : 'אנשי מקצוע מצטרפים עכשיו'}</h3>
+          <h3>${S.memberTotal > n ? `${S.memberTotal} אנשים כבר בפנים` : n ? `${n} אנשי מקצוע כבר בפנים` : 'אנשי מקצוע מצטרפים עכשיו'}</h3>
+          ${S.memberTotal > n && n ? `<p class="ghost-sub">מתוכם ${n} אנשי מקצוע שמחפשים עבודה</p>` : ''}
           <p>תאורה, סאונד, בימוי, שחקנים ועוד. הירשמו כדי לראות מי הם וליצור קשר.</p>
           <button class="btn" data-a="join" data-id="pro">${ic('user-round')} הצטרפות עם גוגל</button>
         </div>${ghosts}`;
@@ -3043,14 +3062,14 @@ function renderTabContent() {
       && (S.region === 'all' || p.region === S.region))
       .sort((a, b) => !!b.photo - !!a.photo); // people with a profile photo first (stable: same order otherwise)
     if (!arr.length) {
-      return `<div class="empty">
+      return membersCard() + `<div class="empty">
         <span class="empty-ic">${ic('users')}</span>
         <h3 style="font-size:22px;color:var(--tx);margin-bottom:6px">אין כרגע פרופילים להצגה</h3>
         <p style="margin:0 0 16px">מי שמסמן בפרופיל ״אני מחפש/ת עבודה״ מופיע כאן עם הניסיון והציוד שלו.</p>
         ${!S.user.seeking ? `<button class="btn" data-a="edit-profile">+ הוספה שלי לאינדקס</button>` : ''}
       </div>`;
     }
-    return arr.map(p => {
+    return membersCard() + arr.map(p => {
       const mine = isMine(p);
       const link = linkHtml(p.link, ic('link') + ' צפייה בתיק עבודות / אינסטגרם');
       return `<article class="card m-person" data-key="u${esc(p.id)}">
