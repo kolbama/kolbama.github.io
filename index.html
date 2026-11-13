@@ -2101,8 +2101,10 @@ async function refreshPushState() {
     const sub = await pushSub();
     const on = !!sub && Notification.permission === 'granted' &&
       !!(await sb.rpc('has_push_subscription', { p_endpoint: sub.endpoint })).data;
-    if (on !== !!S.pushOn) { S.pushOn = on; if (S.tab === 'profile' && !S.modal) render(); }
-  } catch (e) {}
+    const changed = on !== !!S.pushOn || !S.pushChecked;
+    S.pushOn = on; S.pushChecked = true;
+    if (changed && !S.modal) refreshView();
+  } catch (e) { S.pushChecked = true; }
 }
 function b64uBytes(s) {
   const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
@@ -2155,6 +2157,7 @@ function pushBanner() {
   if (!S.user) return '';
   const st = pushState();
   if (st !== 'off' && st !== 'ios-install') return '';
+  if (st === 'off' && !S.pushChecked) { if (!S.pushChecking) { S.pushChecking = true; refreshPushState().finally(() => { S.pushChecking = false; }); } return ''; } // wait until we know this device isn't already registered
   const btn = st === 'off'
     ? `<button class="btn sm" data-a="push-on">${ic('bell')} הפעלת התראות</button>`
     : `<button class="btn sm" data-a="install-open">${ic('download')} הוספה למסך הבית</button>`;
