@@ -2577,7 +2577,7 @@ function welcome() {
       <p class="tagline" data-rise style="--i:2">מרימים הצגה או סרט? מחפשים עבודה? נפגשים כאן.</p>
       <p class="sub" data-rise style="--i:3">חיבור ישיר בין שחקנים, במאים ויוצרים לבין אנשי תאורה, סאונד, צילום, תלבושות, תפאורה והפקה.</p>
       ${open + pros + matches > 0
-        ? `<div class="stats-strip" data-rise style="--i:4">${S.memberTotal > pros ? stat(S.memberTotal, 'חברים באתר') : ''}${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${stat(matches, 'חיבורים שנוצרו')}</div>`
+        ? `<div class="stats-strip" data-rise style="--i:4">${S.memberTotal > pros ? stat(S.memberTotal, 'חברים באתר') : ''}${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${matches >= 20 ? stat(matches, 'חיבורים שנוצרו') : ''}</div>`
         : `<p class="fresh" data-rise style="--i:4">${ic('sparkles')} הלוח חדש. מי שמצטרפים עכשיו מופיעים בו ראשונים.</p>`}
     </div>
     <div class="pick">
