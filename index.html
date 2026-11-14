@@ -4418,7 +4418,7 @@ document.addEventListener('keydown', e => {
   const svg = ind.querySelector('#ptr-svg'), arc = svg.querySelector('circle');
   document.documentElement.style.overscrollBehaviorY = 'contain';
   let y0 = null, dy = 0, busy = false;
-  const blocked = () => document.querySelector('.ov, .intro') || [...document.querySelectorAll('input:not([type=hidden]),textarea')].some(i => i.offsetParent !== null && i.value && i.type !== 'checkbox' && i.type !== 'radio');
+  const blocked = () => performance.now() < 12000 || document.querySelector('.ov, .intro') || [...document.querySelectorAll('input:not([type=hidden]),textarea')].some(i => i.offsetParent !== null && i.value && i.type !== 'checkbox' && i.type !== 'radio');
   const place = (d, anim) => {
     const t = anim && !reduce ? 'transform .25s ease, opacity .2s' : 'none';
     main.style.transition = t; ind.style.transition = t;
