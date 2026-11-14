@@ -1101,7 +1101,12 @@ body { font-size: 1rem; }
 html.app-boot { background: #b72134; }
 html.app-boot #boot-splash { display: grid; place-items: center; position: fixed; top: 0; left: 0; right: 0; bottom: -120px; padding-bottom: 120px; background: #b72134; z-index: 300; }
 html.app-boot body, html.app-boot :root { background: #b72134; }
-#boot-splash img { -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 52%, transparent 71%); mask-image: radial-gradient(circle at 50% 50%, #000 52%, transparent 71%); }
+#boot-splash { overflow: hidden; pointer-events: none; }
+#boot-splash svg { width: min(260px, 70vw); height: auto; overflow: visible; display: block; }
+/* The beam "warms up" slowly while the app loads; render() finishes it to full brightness when ready */
+.bs-lit { opacity: 0; animation: bs-warm 8s cubic-bezier(.15,.7,.3,1) forwards; }
+@keyframes bs-warm { to { opacity: .85; } }
+@media (prefers-reduced-motion: reduce) { .bs-lit { animation: none; opacity: 1; } }
 .dlg .linklike { position: relative; }
 .dlg .linklike::after { content: ""; position: absolute; inset: -12px -6px; }
 @media (max-width: 760px) { .tabs button { font-size: 0.8125rem; } }
@@ -1116,7 +1121,7 @@ html.app-boot body, html.app-boot :root { background: #b72134; }
 </head>
 <body>
 <script>(function(){try{if(navigator.standalone===true||matchMedia('(display-mode: standalone)').matches)document.documentElement.classList.add('app-boot')}catch(e){}})();</script>
-<div id="boot-splash" aria-hidden="true"><img src="icon-192.png" width="150" height="150" alt=""></div>
+<div id="boot-splash" aria-hidden="true"><svg viewBox="10 50 180 130" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bsb" x1="1" y1="0" x2=".25" y2="1"><stop offset="0" stop-color="#ffd84a" stop-opacity=".95"/><stop offset="1" stop-color="#ffd84a" stop-opacity=".14"/></linearGradient><filter id="bsf" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5"/></filter></defs><path d="M154 -2000 V70" stroke="#161012" stroke-width="3" stroke-linecap="round"/><g class="bs-lit"><path d="M128 98 L18 156 L158 166 Z" fill="url(#bsb)" filter="url(#bsf)"/><ellipse cx="88" cy="160" rx="70" ry="14" fill="#ffd84a" opacity=".75" filter="url(#bsf)"/></g><g transform="translate(150 78) scale(1.9) rotate(-38)"><rect x="-13" y="-9" width="30" height="20" rx="4" fill="#161012"/><rect x="-19" y="-7" width="7" height="16" rx="2" fill="#161012"/><ellipse class="bs-lit" cx="-19" cy="1" rx="2.6" ry="7" fill="#fff1b0"/></g></svg></div>
 <a class="skip-link" href="#main">דלגו לתוכן הראשי</a>
 <main id="main" tabindex="-1"></main>
 <div id="modal"></div>
@@ -2320,7 +2325,7 @@ function toApp(a) {
 
 // Small "site manager" label next to the name of whoever runs the site (14.11.2026)
 function adminChip(id) {
-  return S.adminIds && S.adminIds.has(id) ? `<span class="chip medium">מנהל האתר</span>` : '';
+  return S.adminIds && S.adminIds.has(id) ? `<span class="chip medium">מנהל</span>` : '';
 }
 
 async function loadAll() {
@@ -3689,8 +3694,27 @@ const POST_NUDGE = {
   body: 'היי, שמחים שהצטרפת ל״קול במה״! אם יש לך פרויקט שמחפש צוות, כמו תאורה, סאונד, תלבושות או שחקנים, אפשר לפרסם אותו עכשיו בשלושה צעדים קצרים, ואנשי מקצוע מהתחום יראו אותו.'
 };
 
+// Launch screen: light the beam fully, then remove the splash (loading is done)
+let bootSplashEnding = false;
+function finishBootSplash() {
+  const bs = document.getElementById('boot-splash');
+  const done = () => { document.documentElement.classList.remove('app-boot'); if (bs) bs.remove(); };
+  if (!bs) { done(); return; }
+  if (bootSplashEnding) return;
+  bootSplashEnding = true;
+  let calm = false;
+  try { calm = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  if (calm) { done(); return; }
+  bs.querySelectorAll('.bs-lit').forEach(el => {
+    const o = getComputedStyle(el).opacity;
+    el.style.animation = 'none'; el.style.opacity = o; el.getBoundingClientRect();
+    el.style.transition = 'opacity .45s ease-out'; el.style.opacity = '1';
+  });
+  setTimeout(() => { bs.style.transition = 'opacity .25s'; bs.style.opacity = '0'; setTimeout(done, 260); }, 650);
+}
+
 function render() {
-  if (S.ready || S.error) { document.documentElement.classList.remove('app-boot'); const bs = document.getElementById('boot-splash'); if (bs) bs.remove(); }
+  if (S.ready || S.error) finishBootSplash();
   if (S.ready && !S.error) markFirstScreen();
   queueMicrotask(() => linkLabels($('#main')));
   if (!S.ready || S.error) {
