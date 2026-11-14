@@ -29,11 +29,9 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="קול במה – יוצרים, אנשי במה וקולנוע">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://nevbqvduboalpwmehcnj.supabase.co" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bellefair&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Fonts and libraries are served from our own site (fonts/, vendor/), not from Google or a CDN (14.11.2026) -->
+<link href="fonts/fonts.css" rel="stylesheet">
 <style>
 :root {
   --bg: #f6f1f3;
@@ -1101,7 +1099,8 @@ body { font-size: 1rem; }
 /* Installed app: red launch screen from the first paint, until the app is ready (see render()) */
 #boot-splash { display: none; }
 html.app-boot { background: #b72134; }
-html.app-boot #boot-splash { display: grid; place-items: center; position: fixed; top: 0; left: 0; right: 0; height: 100lvh; min-height: 100vh; background: #b72134; z-index: 300; }
+html.app-boot #boot-splash { display: grid; place-items: center; position: fixed; top: 0; left: 0; right: 0; bottom: -120px; padding-bottom: 120px; background: #b72134; z-index: 300; }
+html.app-boot body, html.app-boot :root { background: #b72134; }
 #boot-splash img { -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 52%, transparent 71%); mask-image: radial-gradient(circle at 50% 50%, #000 52%, transparent 71%); }
 .dlg .linklike { position: relative; }
 .dlg .linklike::after { content: ""; position: absolute; inset: -12px -6px; }
@@ -1124,9 +1123,9 @@ html.app-boot #boot-splash { display: grid; place-items: center; position: fixed
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <!-- GSAP 3.15.0 (free "no charge" license): heading and scroll animations. The site works without it. -->
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="vendor/gsap.min.js"></script><!-- gsap 3.15.0 -->
+<script src="vendor/ScrollTrigger.min.js"></script><!-- gsap 3.15.0 -->
+<script src="vendor/supabase.js"></script><!-- @supabase/supabase-js 2.118.0 -->
 <script>
 // Public (publishable) key – safe in the browser; Row Level Security in the database decides who sees what
 // Project kol-bama-eu, region eu-central-1 (Frankfurt). Moved from ap-south-1 on 7.11.2026.
@@ -2319,7 +2318,13 @@ function toApp(a) {
   };
 }
 
+// Small "site manager" label next to the name of whoever runs the site (14.11.2026)
+function adminChip(id) {
+  return S.adminIds && S.adminIds.has(id) ? `<span class="chip medium">מנהל האתר</span>` : '';
+}
+
 async function loadAll() {
+  const adminsReq = sb.rpc('site_admins'); // fails quietly until the SQL is run
   const res = await Promise.all([
     sb.from('profiles').select('*'),
     sb.from('private_contacts').select('*'),
@@ -2334,6 +2339,8 @@ async function loadAll() {
   if (bad) throw bad.error;
   const [profiles, contacts, counts, projects, apps, messages, blocks, isAdmin] = res.map(r => r.data);
   S.isAdmin = isAdmin === true;
+  const ad = await adminsReq;
+  S.adminIds = new Set(ad.error ? [] : (ad.data || []));
   S.blocked = new Set(blocks.map(b => b.blocked_id));
   const visible = id => !S.blocked.has(id); // people I blocked disappear from my screens
   S.profiles = Object.fromEntries(profiles.map(p => [p.id, p]));
@@ -2508,7 +2515,8 @@ async function db(call, failMsg) {
   const { error } = await call;
   if (error) {
     console.error(error);
-    toast(failMsg || 'משהו השתבש. אפשר לנסות שוב.');
+    // The database limits how much one person can send in a short time (anti-spam)
+    toast(/too many/.test(error.message || '') ? 'הגעת למגבלה לזמן קצר. אפשר לנסות שוב מאוחר יותר.' : (failMsg || 'משהו השתבש. אפשר לנסות שוב.'));
     return false;
   }
   return true;
@@ -2578,7 +2586,7 @@ function linkHtml(link, text) {
 function statusScreen() {
   // Installed app (home-screen icon): show the app icon while loading. In a normal browser tab: stay blank.
   const isApp = !S.error && (matchMedia('(display-mode: standalone)').matches || navigator.standalone === true);
-  if (isApp) return `<div style="position:fixed;top:0;left:0;right:0;height:100lvh;min-height:100vh;display:grid;place-items:center;background:#b72134" aria-busy="true"><img src="icon-192.png" alt="קול במה" width="150" height="150" style="-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 52%,transparent 71%);mask-image:radial-gradient(circle at 50% 50%,#000 52%,transparent 71%)"></div>`;
+  if (isApp) return `<div style="position:fixed;top:0;left:0;right:0;bottom:-120px;padding-bottom:120px;box-sizing:border-box;display:grid;place-items:center;background:#b72134" aria-busy="true"><img src="icon-192.png" alt="קול במה" width="150" height="150" style="-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 52%,transparent 71%);mask-image:radial-gradient(circle at 50% 50%,#000 52%,transparent 71%)"></div>`;
   return `<div class="wrap hero">
     <div>
       ${S.error ? '<h1>קול במה</h1>' : '<h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">קול במה</h1>'}
@@ -2732,7 +2740,10 @@ function termsHtml() {
       <li><b>ניסיון, ציוד וקישור לתיק עבודות</b> (רשות) – רק אם רוצים להציג אותם.</li>
       <li><b>תמונת פרופיל</b> (רשות) – מוקטנת לפני השמירה, וכל מידע נסתר שבתוך התמונה (כמו המיקום שבו צולמה) נמחק. אפשר להחליף או להסיר בכל רגע.</li>
       <li><b>כתובת המייל של חשבון הגוגל</b> – רק לכניסה לאתר. לא מוצגת לאף אחד.</li>
+      <li><b>תאריך לידה</b> (חובה) – רק כדי לוודא שמלאו לך 18. חסוי, לא מוצג לאף אחד.</li>
       <li><b>פרויקטים, מועמדויות והודעות</b> – מה שכותבים באתר.</li>
+      <li><b>פניות ודיווחים</b> – מה שכותבים בטופס יצירת קשר או בדיווח, כדי שנוכל לטפל ולענות.</li>
+      <li><b>התראות</b> (רשות) – כדי שההתראות יגיעו אליך, האתר זוכר את המכשיר שבו הפעלת אותן. כיבית? הוא נשכח.</li>
       <li><b>נתונים טכניים בסיסיים</b> (כמו כתובת IP) – נשמרים אוטומטית לצורכי אבטחה.</li>
     </ul>
     <p>אין באתר פרסומות, אין עוגיות מעקב ואין כלי סטטיסטיקה.</p>
@@ -2743,16 +2754,19 @@ function termsHtml() {
       <li><b>גולשים שלא נרשמו</b> – רואים רק תפקידים ועיר של אנשי מקצוע, בלי שם ובלי תמונה, וכמה פרויקטים פתוחים ואילו תפקידים הם מחפשים. פרויקט שמישהו שיתף בקישור נפתח גם להם.</li>
       <li><b>מספר הטלפון</b> – רק את/ה, ומי שיש לו איתך מועמדות שאושרה.</li>
       <li><b>מועמדויות</b> – רק המועמד ובעל הפרויקט.</li>
-      <li><b>הודעות</b> – רק שני האנשים בשיחה.</li>
+      <li><b>הודעות</b> – רק שני האנשים בשיחה. אנחנו לא קוראים אותן, אלא אם התקבל דיווח או שהחוק מחייב.</li>
     </ul>
 
     <h4>איפה המידע נשמר ואיך הוא מוגן</h4>
     <p>כמו רוב האתרים והאפליקציות בישראל, גם ״קול במה״ משתמש בשירות אחסון ענן מקצועי: <bdi>Supabase</bdi>. השרת נמצא ב${esc(DATA_LOCATION)}, אזור שהחוק הישראלי מאשר לשמור בו מידע אישי.</p>
     <ul>
       <li>החיבור לאתר מוצפן (https).</li>
-      <li>אנחנו לא מוכרים את המידע שלך ולא משתמשים בו לשום דבר מלבד האתר. רק שירותי התשתית שהאתר נשען עליהם (אחסון, כניסה עם גוגל, גופנים) מטפלים בו כדי שהאתר יעבוד.</li>
+      <li>אנחנו לא מוכרים את המידע שלך ולא משתמשים בו לשום דבר מלבד האתר. רק שירותי התשתית שהאתר נשען עליהם (אחסון, כניסה עם גוגל, שליחת התראות) מטפלים בו כדי שהאתר יעבוד.</li>
     </ul>
     <p>בהרשמה את/ה מסכים/ה שהמידע יישמר בשרת הזה.</p>
+
+    <h4>כמה זמן המידע נשמר</h4>
+    <p>כל עוד יש לך חשבון. מחיקת החשבון מוחקת את הפרופיל, הפרויקטים, המועמדויות וההודעות שלך. פנייה ששלחת בטופס יצירת קשר נשמרת כדי שנוכל לטפל בה, ואפשר לבקש שנמחק גם אותה.</p>
 
     <h4>הזכויות שלך</h4>
     <ul>
@@ -2763,6 +2777,10 @@ function termsHtml() {
 
     <h4>דיווח וחסימה</h4>
     <p>בכל מודעה, פרופיל ושיחה יש כפתור דיווח (דגל). אפשר גם לחסום משתמש, ואז לא תהיה לו אפשרות לפנות אליך.</p>
+    <p>מצאת באתר תוכן שפוגע בך או בזכויות שלך (למשל העתקה של יצירה שלך, או דברים לא נכונים עליך)? אפשר לדווח עליו בכפתור הדיווח או בטופס יצירת קשר. נבדוק, ונסיר תוכן שלא אמור להיות כאן.</p>
+
+    <h4>אחריות</h4>
+    <p>השימוש באתר הוא באחריותך. האתר ניתן כמו שהוא, ואנחנו לא אחראים לנזק שנגרם מהשימוש בו או מקשר שנוצר דרכו. על השימוש באתר חל החוק בישראל, ומחלוקות יתבררו בבתי המשפט בישראל.</p>
 
     <h4>שינוי בתנאים</h4>
     <p>אם נשנה את התנאים, נעדכן את התאריך למעלה. אם השינוי מהותי, נבקש את אישורך מחדש.</p>
@@ -3009,7 +3027,7 @@ function projectCard(p) {
     <div class="bd">
       <div class="meta">
         <span class="chip">${esc(p.frame)}</span>
-        <span>${ic('user')} יוצר: <b>${esc(p.creator)}</b> ${p.studio ? `(${esc(p.studio)})` : ''}</span>
+        <span>${ic('user')} יוצר: <b>${esc(p.creator)}</b> ${adminChip(p.uid)} ${p.studio ? `(${esc(p.studio)})` : ''}</span>
         <span>${ic('map-pin')} מיקום: <b>${esc(p.loc)}</b>${p.region ? ` (${esc(p.region)})` : ''}</span>
         <span>${ic('calendar')} לו״ז: <b>${esc(p.dates)}</b></span>
         ${p.deadline && open ? `<span>${ic('clock')} הגשה עד: <b>${esc(dateLabel(p.deadline))}</b></span>` : ''}
@@ -3127,6 +3145,7 @@ function renderTabContent() {
             ${avatar(p.name, 56, p.photo)}
             <div class="who-txt">
               <h3>${esc(p.name)}</h3>
+              ${adminChip(p.id)}
               <span class="chip verified">${ic('check')} ${p.completed || 0} הפקות ב״קול במה״</span>
             </div>
           </div>
@@ -3313,7 +3332,7 @@ function renderTabContent() {
           ${u.seeking ? `<span class="chip verified">${ic('check')} מחפש/ת עבודה – מופיע/ה באינדקס</span>` : '<span class="chip">לא מופיע/ה באינדקס אנשי המקצוע</span>'}
           <button class="btn ghost sm" data-a="edit-profile">${ic('pencil')} עריכת הפרופיל</button>
         </div>
-        <div class="who">${avatar(u.name, 72, u.photo)}<h3 style="font-size:1.875rem;margin:0">${esc(u.name)}</h3></div>
+        <div class="who">${avatar(u.name, 72, u.photo)}<h3 style="font-size:1.875rem;margin:0">${esc(u.name)}</h3>${adminChip(S.uid)}</div>
         <div class="row photo-row">
           <label class="btn ghost sm photo-pick">${ic('camera')} ${u.photo ? 'החלפת התמונה' : 'הוספת תמונת פרופיל'}
             <input type="file" accept="image/*" data-photo class="vh">
@@ -4328,7 +4347,9 @@ document.addEventListener('submit', async e => {
     const { error } = await sb.from('applications').insert({ project_id: proj.id, role: d.role, note: d.note.trim() });
     if (error) {
       setBusy(f, false);
-      toast(error.code === '23505' ? 'כבר הגשת מועמדות לפרויקט הזה' : 'משהו השתבש. אפשר לנסות שוב.');
+      toast(error.code === '23505' ? 'כבר הגשת מועמדות לפרויקט הזה'
+        : /too many/.test(error.message || '') ? 'הגעת למגבלה לזמן קצר. אפשר לנסות שוב מאוחר יותר.'
+        : 'משהו השתבש. אפשר לנסות שוב.');
       return;
     }
     await loadAll();
