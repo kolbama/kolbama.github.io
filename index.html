@@ -1098,6 +1098,8 @@ body { font-size: 1rem; }
 .conv .last, .role-group > span, .pick span, .ext-link, .inst-steps .pic { font-size: 0.875rem; }
 .m-meta, .tick, .badge { font-size: 0.75rem; }
 .tabs button { font-size: 0.875rem; }
+.dlg .linklike { position: relative; }
+.dlg .linklike::after { content: ""; position: absolute; inset: -12px -6px; }
 @media (max-width: 760px) { .tabs button { font-size: 0.8125rem; } }
 
 /* "Reduce transparency" in the device settings: no blur, solid backgrounds (Apple HIG: Accessibility / Materials) */
@@ -2567,6 +2569,9 @@ function linkHtml(link, text) {
 // ───────────── Views ─────────────
 
 function statusScreen() {
+  // Installed app (home-screen icon): show the app icon while loading. In a normal browser tab: stay blank.
+  const isApp = !S.error && (matchMedia('(display-mode: standalone)').matches || navigator.standalone === true);
+  if (isApp) return `<div style="position:fixed;inset:0;display:grid;place-items:center" aria-busy="true"><img src="icon-192.png" alt="קול במה" width="112" height="112" style="border-radius:26px"></div>`;
   return `<div class="wrap hero">
     <div>
       ${S.error ? '<h1>קול במה</h1>' : '<h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">קול במה</h1>'}
@@ -2663,7 +2668,7 @@ const footLinks = () => `<p class="site-idea"><span>${ic('lightbulb')} יש לכ
 function accessHtml() {
   return `<div class="terms">
     <h3 id="dlg-title">הצהרת נגישות</h3>
-    <p class="note" style="margin-top:0">עודכן: 7.11.2026</p>
+    <p class="note" style="margin-top:0">עודכן: 14.11.2026</p>
     <p>אנחנו רוצים שכל אחד ואחת יוכלו להשתמש ב״קול במה״. האתר נבנה לפי התקן הישראלי 5568, שמבוסס על הנחיות WCAG 2.0 ברמה AA, ואנחנו ממשיכים לשפר אותו.</p>
 
     <h4>מה כבר יש באתר</h4>
@@ -2679,7 +2684,6 @@ function accessHtml() {
     <h4>מגבלות ידועות</h4>
     <ul>
       <li>האתר עוד לא נבדק בידי מורשה נגישות, ועוד לא נבדק עם קורא מסך.</li>
-      <li>בחלק מהטפסים התוויות עוד לא מקושרות לשדות.</li>
       <li>תוכן שמשתמשים מעלים (כמו תיאורי פרויקטים) הוא באחריותם.</li>
     </ul>
 
@@ -2692,10 +2696,16 @@ function accessHtml() {
 function termsHtml() {
   return `<div class="terms">
     <h3>תנאי שימוש ופרטיות</h3>
-    <p class="note" style="margin-top:0">עודכן: 7.11.2026</p>
+    <p class="note" style="margin-top:0">עודכן: 14.11.2026</p>
 
     <h4>מה זה ״קול במה״</h4>
     <p>לוח מודעות קהילתי וחינמי שמחבר בין יוצרים, שחקנים ואנשי מקצוע בתיאטרון ובקולנוע. האתר רק מפגיש: הוא לא צד להסכמים בין המשתמשים, לא בודק אותם, ולא אחראי לעבודה שנעשית ביניהם. כדאי לבדוק עם מי עובדים ולסכם תנאים מראש.</p>
+
+    <h4>תקלות</h4>
+    <p>אנחנו משתדלים שהאתר יעבוד טוב, אבל לפעמים יש תקלות, ואי אפשר להבטיח שהכול יעבוד תמיד בלי הפרעה.</p>
+
+    <h4>התוכן שלך</h4>
+    <p>מה שמעלים לאתר נשאר של מי שהעלה אותו. האתר מציג אותו רק כדי שהאתר יעבוד, ואפשר להסיר אותו בכל רגע.</p>
 
     <h4>מה אסור</h4>
     <ul>
@@ -2733,7 +2743,7 @@ function termsHtml() {
     <p>כמו רוב האתרים והאפליקציות בישראל, גם ״קול במה״ משתמש בשירות אחסון ענן מקצועי: <bdi>Supabase</bdi>. השרת נמצא ב${esc(DATA_LOCATION)}, אזור שהחוק הישראלי מאשר לשמור בו מידע אישי.</p>
     <ul>
       <li>החיבור לאתר מוצפן (https).</li>
-      <li>אנחנו לא מוכרים מידע, לא מעבירים אותו לאף אחד ולא משתמשים בו לשום דבר מלבד האתר.</li>
+      <li>אנחנו לא מוכרים את המידע שלך ולא משתמשים בו לשום דבר מלבד האתר. רק שירותי התשתית שהאתר נשען עליהם (אחסון, כניסה עם גוגל, גופנים) מטפלים בו כדי שהאתר יעבוד.</li>
     </ul>
     <p>בהרשמה את/ה מסכים/ה שהמידע יישמר בשרת הזה.</p>
 
@@ -2746,6 +2756,9 @@ function termsHtml() {
 
     <h4>דיווח וחסימה</h4>
     <p>בכל מודעה, פרופיל ושיחה יש כפתור דיווח (דגל). אפשר גם לחסום משתמש, ואז לא תהיה לו אפשרות לפנות אליך.</p>
+
+    <h4>שינוי בתנאים</h4>
+    <p>אם נשנה את התנאים, נעדכן את התאריך למעלה. אם השינוי מהותי, נבקש את אישורך מחדש.</p>
   </div>`;
 }
 
