@@ -1154,6 +1154,15 @@ html.app-boot body, html.app-boot :root { background: #b72134; }
 .steps-ico p { text-wrap: pretty; }
 .steps-wrap:has(.steps-ico) .rail { display: none; }
 .welcome-foot { padding-top: 8px; padding-bottom: 28px; text-align: center; }
+/* Landing polish (20.11.2026): login as clean text (Guy chose א), quiet step numbers, CTA like the top, one-row footer */
+.pick-links .login-link { background: none; border: 0; border-radius: 0; box-shadow: none; color: var(--mut); text-decoration: none; font-weight: 400; }
+.pick-links .login-link b { color: var(--tx); font-weight: 700; margin-inline-start: 4px; padding-bottom: 2px; border-bottom: 1.5px solid var(--gold); transition: border-color .15s ease-out; }
+.pick-links .login-link:hover b { border-color: var(--tx); }
+.steps-ico .step-badge { top: -6px; inset-inline-start: -6px; background: var(--card); color: var(--gold); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--gold) 55%, transparent); font-size: 12px; }
+.how-cta .pick { max-width: 440px; width: 100%; }
+.welcome-foot .site-foot { flex-wrap: nowrap; gap: 0 6px; white-space: nowrap; }
+.welcome-foot .site-foot .linklike { font-size: 0.9rem; padding-inline: 2px; }
+@media (max-width: 340px) { .welcome-foot .site-foot { flex-wrap: wrap; white-space: normal; } }
 </style>
 </head>
 <body>
@@ -1903,12 +1912,14 @@ function revealHow() {
     [vertical ? 'scaleY' : 'scaleX']: 1, ease: 'none',
     scrollTrigger: { trigger: '.steps-wrap', start: 'top 75%', end: 'bottom 55%', scrub: 0.5 }
   }).scrollTrigger);
-  const cta = sec.querySelector('.how-cta');
-  hidden.push(cta);
-  motionTriggers.push(gsap.from(cta, {
-    autoAlpha: 0, y: 60, duration: 0.9, ease: 'power3.out', clearProps: CLEAR,
-    scrollTrigger: { trigger: cta, start: 'top 90%', once: true }
-  }).scrollTrigger);
+  const cta = sec.querySelector('.how-cta'); // removed from the landing page 20.11.2026 (Guy)
+  if (cta) {
+    hidden.push(cta);
+    motionTriggers.push(gsap.from(cta, {
+      autoAlpha: 0, y: 60, duration: 0.9, ease: 'power3.out', clearProps: CLEAR,
+      scrollTrigger: { trigger: cta, start: 'top 90%', once: true }
+    }).scrollTrigger);
+  }
   // Safety net, as with the cards
   setTimeout(() => hidden.forEach(el => {
     if (el.isConnected && el.getBoundingClientRect().top < innerHeight && +getComputedStyle(el).opacity < 0.1) gsap.set(el, { clearProps: CLEAR });
@@ -2010,6 +2021,22 @@ const isInApp = () => /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|Messenger|TikT
 const isIOSNotSafari = () => isIOS() && /CriOS|FxiOS|EdgiOS|OPiOS|GSA\//i.test(navigator.userAgent);
 const isPhone = () => matchMedia('(pointer: coarse) and (max-width: 820px)').matches;
 const SITE_URL = 'https://kolbama.github.io/';
+// One tap from Instagram/Facebook/WhatsApp or Chrome on iPhone straight into the right browser.
+// iPhone: x-safari-https:// opens Safari (iOS 17+; older phones just ignore it, the copy button stays).
+// Android: an intent link opens Chrome. ?add=1 makes the site open the "add to home screen" steps on arrival.
+const OPEN_SAFARI_URL = 'x-safari-' + SITE_URL + '?add=1';
+const OPEN_CHROME_URL = 'intent://kolbama.github.io/?add=1#Intent;scheme=https;package=com.android.chrome;end';
+const openBrowserBtn = () => isIOS()
+  ? `<a class="btn wide" href="${OPEN_SAFARI_URL}">${ic('smartphone')} פתיחה ב־Safari</a>`
+  : `<a class="btn wide" href="${OPEN_CHROME_URL}">${ic('smartphone')} פתיחה ב־Chrome</a>`;
+if (/[?&]add=1/.test(location.search)) {
+  try { history.replaceState(history.state, '', location.pathname + location.hash); } catch (e) {}
+  (function waitForApp() {
+    if (isStandalone()) return;
+    if (!S.ready || S.modal || S.onboardingType) { setTimeout(waitForApp, 800); return; }
+    openInstallSheet(1);
+  })();
+}
 
 function installMode() {
   if (isStandalone()) return 'done';
@@ -2046,6 +2073,8 @@ function installSheet() {
   } else if (mode === 'inapp') {
     h = `<h3>קודם פותחים בדפדפן</h3>
       <p class="note">מתוך פייסבוק, אינסטגרם או וואטסאפ אי אפשר להוסיף למסך הבית.</p>
+      ${openBrowserBtn()}
+      <p class="note">לא נפתח? אפשר גם ככה:</p>
       <ol class="inst-steps">
         <li><span class="num">1</span><span>לוחצים על <b>⋯</b> או <b>⋮</b> בפינה, ובוחרים <b>״פתיחה בדפדפן״</b>${isIOS() ? ' (או ״פתיחה ב־Safari״)' : ''}</span></li>
         <li><span class="num">2</span><span>שם לוחצים שוב ״הוספה למסך הבית״</span></li>
@@ -2056,6 +2085,8 @@ function installSheet() {
   } else if (mode === 'ios-other') {
     h = `<h3>פותחים ב־Safari</h3>
       ${SAFARI_ONLY}
+      ${openBrowserBtn()}
+      <p class="note">לא נפתח? אפשר גם ככה:</p>
       <ol class="inst-steps">
         <li><span class="num">1</span><span>מעתיקים את הקישור בכפתור למטה</span></li>
         <li><span class="num">2</span><span>פותחים את <b>Safari</b> ומדביקים בשורת הכתובת</span></li>
@@ -2720,13 +2751,13 @@ function statusScreen() {
 function statsHtml() {
   const stat = (n, label) => `<div><b data-count="${n}">${n}</b><span>${label}</span></div>`;
   if (S.pendingNumbers) {
-    return `<div class="stats-strip stats-pending" data-rise style="--i:4" aria-hidden="true">${['חברים באתר', 'פרויקטים פתוחים', 'אנשי מקצוע'].map(l => `<div><b>–</b><span>${l}</span></div>`).join('')}</div>`;
+    return `<div class="stats-strip stats-pending" data-rise style="--i:4" aria-hidden="true">${['חברים באתר', 'אנשי מקצוע'].map(l => `<div><b>–</b><span>${l}</span></div>`).join('')}</div>`;
   }
   const open = S.projects.filter(isOpen).length;
   const pros = proCount();
   const matches = Object.values(S.counts).reduce((a, b) => a + b, 0);
   return open + pros + matches > 0
-    ? `<div class="stats-strip" data-rise style="--i:4">${S.memberTotal > pros ? stat(S.memberTotal, 'חברים באתר') : ''}${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${matches >= 20 ? stat(matches, 'חיבורים שנוצרו') : ''}</div>`
+    ? `<div class="stats-strip" data-rise style="--i:4">${S.memberTotal > pros ? stat(S.memberTotal, 'חברים באתר') : ''}${open >= 3 ? stat(open, 'פרויקטים פתוחים') : ''}${stat(pros, 'אנשי מקצוע')}${matches >= 20 ? stat(matches, 'חיבורים שנוצרו') : ''}</div>`
     : `<p class="fresh" data-rise style="--i:4">${ic('sparkles')} הלוח חדש. מי שמצטרפים עכשיו מופיעים בו ראשונים.</p>`;
 }
 function updateWelcomeNumbers() {
@@ -2745,7 +2776,7 @@ function heroPick() {
         <span class="go">${ic('arrow-right')}</span>
       </button>
       <button type="button" class="btn ghost peek" data-a="browse" data-rise style="--i:6">${ic('layout-grid')} מי כבר כאן? הצצה בלוח</button>
-      <p class="pick-links" data-rise style="--i:7"><button type="button" class="linklike" data-a="google">כבר רשומים? כניסה</button></p>
+      <p class="pick-links" data-rise style="--i:7"><button type="button" class="linklike login-link" data-a="google">כבר רשומים? <b>כניסה</b></button></p>
     </div>`;
 }
 
@@ -2787,13 +2818,6 @@ function welcome() {
         <div><h3>נפגשים ויוצרים</h3><p>בעל הפרויקט מאשר, ורק אז מספר הטלפון נחשף. משם ממשיכים בוואטסאפ.</p></div>
       </li>
     </ol>
-    </div>
-    <div class="how-cta">
-      <h2 class="how-title">מוכנים להרים את ההפקה הבאה?</h2>
-      <div class="row">
-        <button class="btn" data-a="start-onboard" data-id="creator">${ic('drama')} פתיחת חשבון</button>
-        <button type="button" class="btn ghost" data-a="browse">${ic('layout-grid')} הצצה בלוח</button>
-      </div>
     </div>
   </section>
   <div class="wrap welcome-foot">${footLinks(true, false)}</div>`;
