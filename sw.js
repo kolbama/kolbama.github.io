@@ -3,11 +3,14 @@
 // v3 (8.11.2026): Shai's studio lives on the same address (kolbama.github.io/shai-studio/). The old version
 // saved her page as our home page, so when the internet was weak, קול במה opened her studio instead.
 // Now we only touch our own home page, and never delete the other app's saved files.
-const CACHE = 'kol-bama-v3';
+// v4 (19.11.2026): the libraries, fonts and icons are kept on the phone, so they don't download on every open.
+// When a file in vendor/ or fonts/ changes: change the name below (kol-bama-v5…) so phones take the new one.
+const CACHE = 'kol-bama-v4';
+const STATIC = /^\/(vendor|fonts)\/|^\/(icon-192|icon-512|favicon-32|apple-touch-icon)\.png$/;
 
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'icon-192.png'])));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'icon-192.png', 'vendor/gsap.min.js', 'vendor/ScrollTrigger.min.js', 'vendor/supabase.js', 'fonts/fonts.css'])));
 });
 
 self.addEventListener('activate', e => {
@@ -17,20 +20,30 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.mode !== 'navigate') return; // data from Supabase etc. is never cached
-  const path = new URL(e.request.url).pathname;
+  const url = new URL(e.request.url);
+  if (url.origin !== location.origin || e.request.method !== 'GET') return; // data from Supabase etc. is never cached
+  const path = url.pathname;
+  // Our own libraries, fonts and icons: from the phone first, the internet only if missing
+  if (STATIC.test(path)) {
+    e.respondWith(caches.open(CACHE).then(c => c.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+      if (res.ok) c.put(e.request, res.clone());
+      return res;
+    }))));
+    return;
+  }
+  if (e.request.mode !== 'navigate') return;
   if (path !== '/' && path !== '/index.html') return; // any other page (like /shai-studio/) is left alone
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put('./', copy));
-        }
-        return res;
-      })
-      .catch(() => caches.match('./'))
-  );
+  // The page itself: always the newest from the internet. If the internet is very slow (4 seconds) or down,
+  // the saved copy opens instead, and the new one is saved quietly for next time.
+  const net = fetch(e.request).then(res => {
+    if (res.ok) {
+      const copy = res.clone();
+      caches.open(CACHE).then(c => c.put('./', copy));
+    }
+    return res;
+  });
+  const slow = new Promise(r => setTimeout(r, 4000)).then(() => caches.match('./')).then(hit => hit || net);
+  e.respondWith(Promise.race([net, slow]).catch(() => caches.match('./')));
 });
 
 // Phone notifications (8.11.2026). The server sends {title, body, url, tag}.

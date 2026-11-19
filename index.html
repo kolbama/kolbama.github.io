@@ -808,9 +808,23 @@ header.top { padding: 4px 0 20px; margin-bottom: 20px; }
 html.anim-off [data-rise] { animation: none; }
 @keyframes rise-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 .stats-strip { display: flex; gap: 10px; margin-top: 20px; }
-.stats-strip > div { flex: 1 1 0; max-width: 150px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.stats-strip b { display: block; font-family: var(--font-display); font-weight: 900; font-size: 2rem; line-height: 1.05; color: var(--gold); }
+.stats-strip > div { flex: 1 1 0; max-width: 170px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.stats-strip b { display: block; font-family: var(--font-display); font-weight: 900; font-size: 2.5rem; line-height: 1.05; color: var(--gold); }
 .stats-strip span { font-size: 0.8125rem; color: var(--mut); line-height: 1.3; display: block; }
+.how-demo { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: center; max-width: 560px; margin: 0 auto 28px; }
+.how-demo .demo-card.pro { animation: demo-pro 6s ease-in-out infinite; }
+.how-demo .demo-link { animation: demo-link 6s ease-in-out infinite; }
+@keyframes demo-pro { 0%, 15% { opacity: .3; transform: translateX(-16px); } 35%, 85% { opacity: 1; transform: none; } 100% { opacity: .3; transform: translateX(-16px); } }
+@keyframes demo-link { 0%, 30% { opacity: 0; } 50%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .how-demo .demo-card.pro, .how-demo .demo-link { animation: none; } }
+.demo-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; text-align: start; min-width: 0; }
+.demo-tag { display: inline-block; font-size: 0.72rem; color: var(--mut); margin-bottom: 4px; }
+.demo-card b { display: block; font-size: 0.95rem; color: var(--tx); line-height: 1.35; }
+.demo-card span.d { display: block; font-size: 0.8rem; color: var(--mut); margin-top: 2px; }
+.demo-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.demo-chips i { font-style: normal; font-size: 0.74rem; padding: 3px 9px; border-radius: 99px; background: var(--gold-bg); color: var(--gold); font-weight: 700; }
+.demo-link { font-size: 0.74rem; font-weight: 700; color: var(--ac-text, var(--ac)); text-align: center; line-height: 1.3; }
+@media (max-width: 560px) { .how-demo { grid-template-columns: 1fr; } .how-demo .demo-card.pro { animation-name: demo-pro-m; } @keyframes demo-pro-m { 0%, 15% { opacity: .3; transform: translateY(14px); } 35%, 85% { opacity: 1; transform: none; } 100% { opacity: .3; transform: translateY(14px); } } .demo-link br { display: none; } .demo-link::after { content: " ↓"; } .demo-card { padding: 10px 12px; } }
 .fresh { display: inline-flex; align-items: center; gap: 8px; margin: 18px 0 0; padding: 8px 14px; border-radius: 99px; background: var(--gold-bg); color: var(--gold); font-weight: 700; font-size: 0.875rem; }
 .ticker { margin-inline: -16px; overflow: hidden; border-block: 1px solid var(--line); padding: 12px 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
 .ticker-track { display: flex; gap: 26px; width: max-content; white-space: nowrap; font-weight: 700; font-size: 0.9375rem; color: var(--mut); animation: tick 55s linear infinite; }
@@ -1117,6 +1131,29 @@ html.app-boot body, html.app-boot :root { background: #b72134; }
   .ov { background: rgba(10, 3, 6, 0.92); }
   .tabs, .stats-strip > div { background: var(--card); }
 }
+/* ── Landing v4 (19.11.2026): bigger text, one clear first step ── */
+.stats-pending b { opacity: .35; }
+.stats-strip span { font-size: 0.95rem; }
+.hero .sub { font-size: clamp(17px, 4.4vw, 20px); line-height: 1.5; }
+.pick .primary .txt b { font-size: 1.25rem; }
+.pick-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; margin: 2px 0 0; font-size: 1rem; color: var(--mut); }
+.pick-links .linklike { font-size: 1rem; min-height: 44px; padding: 0 4px; }
+.pick .btn.peek { width: 100%; min-height: 58px; justify-content: center; font-size: 1.15rem; font-weight: 700; border: 2px solid var(--gold); color: var(--tx); border-radius: 16px; }
+.demo-tag { font-size: 0.85rem; }
+.demo-card b { font-size: 1.05rem; }
+.demo-card span.d { font-size: 0.92rem; }
+.demo-chips i { font-size: 0.85rem; }
+.demo-link { font-size: 0.92rem; }
+.how .step p { font-size: 1.02rem; }
+/* "How it works", option א (19.11.2026): each step is a soft card with an icon in a gold circle */
+.steps-ico .step { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 1px 2px rgb(60 20 20 / .06), 0 6px 18px rgb(60 20 20 / .08); }
+.steps-ico .step-n { width: 58px; height: 58px; border: 0; background: var(--gold-bg); color: var(--gold); }
+.steps-ico .step-n svg { width: 26px; height: 26px; stroke-width: 1.75; }
+.steps-ico .step-badge { position: absolute; top: -4px; inset-inline-start: -4px; width: 22px; height: 22px; border-radius: 50%; background: var(--ac); color: #fff; font: 700 13px/22px Heebo, sans-serif; font-style: normal; text-align: center; }
+.steps-ico h3 { text-wrap: balance; }
+.steps-ico p { text-wrap: pretty; }
+.steps-wrap:has(.steps-ico) .rail { display: none; }
+.welcome-foot { padding-top: 8px; padding-bottom: 28px; text-align: center; }
 </style>
 </head>
 <body>
@@ -1132,6 +1169,17 @@ html.app-boot body, html.app-boot :root { background: #b72134; }
 <script src="vendor/ScrollTrigger.min.js"></script><!-- gsap 3.15.0 -->
 <script src="vendor/supabase.js"></script><!-- @supabase/supabase-js 2.118.0 -->
 <script>
+// The database library did not load (blocked network, e.g. at school): explain instead of a blank screen
+if (!window.supabase) {
+  document.documentElement.classList.remove('app-boot');
+  var bootSplashEl = document.getElementById('boot-splash'); if (bootSplashEl) bootSplashEl.remove();
+  document.getElementById('main').innerHTML = '<div class="wrap hero"><div class="hero-main"><h1>קול במה</h1>'
+    + '<p class="tagline">לא הצלחנו לטעון את האתר</p>'
+    + '<p class="sub">ייתכן שהרשת שלכם חוסמת אותו, למשל ברשת של מקום לימודים או עבודה. אפשר לנסות שוב, או לעבור לגלישה בסלולר.</p>'
+    + '<div class="row" style="margin-top:16px"><button class="btn" onclick="location.reload()">לנסות שוב</button></div></div></div>';
+}
+</script>
+<script>
 // Public (publishable) key – safe in the browser; Row Level Security in the database decides who sees what
 // Project kol-bama-eu, region eu-central-1 (Frankfurt). Moved from ap-south-1 on 7.11.2026.
 const SUPABASE_URL = 'https://nevbqvduboalpwmehcnj.supabase.co';
@@ -1140,34 +1188,38 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { fl
 
 const ROLES = {
   acting: 'שחקן/ית',
-  direct: 'בימוי',
+  // 19.11.2026: names of people, not of fields, per the list prepared for Martin (he did not answer;
+  // Guy decided to go ahead). Only the labels changed: the keys stay, so saved profiles are untouched.
+  direct: 'במאי/ת',
   assist_direct: 'עוזר/ת במאי',
-  prod: 'הפקה וניהול',
-  casting: 'ליהוק',
+  prod: 'מפיק/ה / מנהל/ת הפקה',
+  casting: 'מלהק/ת',
   dramaturg: 'מחזאי/ת / תסריטאי/ת / דרמטורג/ית',
   lighting_design: 'מעצב/ת תאורה',
-  lighting_op: 'מפעיל/ת תאורה (בקליינר)',
-  sound_design: 'מעצב/ת סאונד ומוזיקה',
+  lighting_op: 'מפעיל/ת תאורה',
+  sound_design: 'מעצב/ת סאונד',
+  composer: 'מלחין/ה',
+  tech_mgr: 'מנהל/ת טכני/ת',
   sound_op: 'מפעיל/ת סאונד',
-  stage_mgr: 'מנהל/ת הצגה (Stage Manager)',
-  costume: 'עיצוב תלבושות ואביזרים',
-  set: 'עיצוב תפאורה וחלל / ארט',
-  makeup: 'איפור ושיער',
-  movement: 'מעצב/ת תנועה',
+  stage_mgr: 'מנהל/ת הצגה',
+  costume: 'מעצב/ת תלבושות',
+  set: 'מעצב/ת תפאורה ואביזרים',
+  makeup: 'מאפר/ת ומעצב/ת שיער',
+  movement: 'מעצב/ת תנועה / כוריאוגרף/ית',
   dancer: 'רקדן/ית',
   musician: 'נגן/ית / מוזיקאי/ת',
-  vocal_coach: 'מלווה קולי (להצגות מוזיקליות)',
+  vocal_coach: 'מנהל/ת מוזיקלי/ת / מאמן/ת קול',
   social_mgr: 'מנהל/ת סושיאל',
-  dop: 'צילום (DOP / צלם/ת)',
-  gaffer: 'תאורה לצילום (גפר)',
-  film_sound: 'סאונד בצילומים (בום / הקלטה)',
-  editor: 'עריכה ופוסט'
+  dop: 'צלם/ת',
+  gaffer: 'תאורן/ית צילום (גפר)',
+  film_sound: 'מקליט/ת סאונד',
+  editor: 'עורך/ת וידאו'
 };
 
 // Groups shown in the profile skills picker
 const ROLE_GROUPS = [
   ['יצירה והפקה', ['acting', 'dancer', 'musician', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'social_mgr']],
-  ['במה', ['lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr', 'vocal_coach']],
+  ['במה', ['lighting_design', 'lighting_op', 'sound_design', 'composer', 'sound_op', 'stage_mgr', 'vocal_coach', 'tech_mgr']],
   ['עיצוב', ['costume', 'set', 'makeup', 'movement']],
   ['קולנוע ווידאו', ['dop', 'gaffer', 'film_sound', 'editor']]
 ];
@@ -1215,8 +1267,8 @@ const REPORT_REASONS = [
 ];
 
 const MEDIA_ROLES = {
-  theater: ['acting', 'dancer', 'musician', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'lighting_design', 'lighting_op', 'sound_design', 'sound_op', 'stage_mgr', 'vocal_coach', 'costume', 'set', 'makeup', 'movement', 'social_mgr'],
-  film: ['acting', 'dancer', 'musician', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'dop', 'gaffer', 'film_sound', 'editor', 'sound_design', 'costume', 'set', 'makeup', 'movement', 'social_mgr']
+  theater: ['acting', 'dancer', 'musician', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'lighting_design', 'lighting_op', 'sound_design', 'composer', 'sound_op', 'stage_mgr', 'vocal_coach', 'tech_mgr', 'costume', 'set', 'makeup', 'movement', 'social_mgr'],
+  film: ['acting', 'dancer', 'musician', 'direct', 'assist_direct', 'prod', 'casting', 'dramaturg', 'dop', 'gaffer', 'film_sound', 'editor', 'sound_design', 'composer', 'costume', 'set', 'makeup', 'movement', 'social_mgr']
 };
 
 const FORMATS = {
@@ -2328,8 +2380,9 @@ function adminChip(id) {
   return S.adminIds && S.adminIds.has(id) ? `<span class="chip medium">מנהל</span>` : '';
 }
 
-async function loadAll() {
-  const adminsReq = sb.rpc('site_admins'); // fails quietly until the SQL is run
+// All the data in ONE round to the server (19.11.2026: before, guests and members waited for 2–3 rounds in a row)
+async function fetchAll() {
+  const guest = S.isGuest; // guest-only numbers and my birth-date check are asked in the same round
   const res = await Promise.all([
     sb.from('profiles').select('*'),
     sb.from('private_contacts').select('*'),
@@ -2338,14 +2391,58 @@ async function loadAll() {
     sb.from('applications').select('*').order('created_at', { ascending: false }),
     sb.from('messages').select('*').order('created_at'),
     sb.from('blocks').select('blocked_id'),
-    sb.rpc('is_admin')
-  ]);
-  const bad = res.find(r => r.error);
+    sb.rpc('is_admin'),
+    sb.rpc('site_admins'), // fails quietly until the SQL is run
+    guest ? sb.rpc('guest_people') : null,
+    guest ? sb.rpc('guest_owners') : null,
+    guest ? sb.rpc('member_count') : null,
+    sb.from('private_birth').select('user_id').eq('user_id', S.uid).maybeSingle()
+  ].map(r => r || Promise.resolve(null)));
+  const bad = res.slice(0, 8).find(r => r.error);
   if (bad) throw bad.error;
-  const [profiles, contacts, counts, projects, apps, messages, blocks, isAdmin] = res.map(r => r.data);
-  S.isAdmin = isAdmin === true;
-  const ad = await adminsReq;
-  S.adminIds = new Set(ad.error ? [] : (ad.data || []));
+  const ok = r => r && !r.error;
+  return {
+    profiles: res[0].data, contacts: res[1].data, counts: res[2].data, projects: res[3].data,
+    apps: res[4].data, messages: res[5].data, blocks: res[6].data, isAdmin: res[7].data === true,
+    admins: ok(res[8]) ? (res[8].data || []) : [],
+    guestPeople: ok(res[9]) ? (res[9].data || []) : null,
+    guestOwners: ok(res[10]) ? (res[10].data || []) : [],
+    memberTotal: ok(res[11]) && typeof res[11].data === 'number' ? res[11].data : null, // null until the SQL is run
+    birth: res[12] ? (res[12].error ? true : !!res[12].data) : true // on error (table missing) don't lock anyone out
+  };
+}
+
+async function loadAll() {
+  const d = await fetchAll();
+  applyData(d);
+  return d;
+}
+
+// Saved copy of the last board on this device, so the next open shows it at once (then it updates).
+// No messages and no phone numbers in it. Removed on logout and account deletion.
+const SNAP_KEY = 'kb_snap';
+function saveSnap(d) {
+  try {
+    const s = JSON.stringify({ v: 1, uid: S.uid, isGuest: S.isGuest, at: Date.now(),
+      d: Object.assign({}, d, { contacts: [], messages: [], isAdmin: false }) });
+    if (s.length < 1500000) localStorage.setItem(SNAP_KEY, s);
+  } catch (e) {}
+}
+function readSnap() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null');
+    return s && s.v === 1 && s.d && Date.now() - s.at < 30 * 864e5 ? s : null;
+  } catch (e) { return null; }
+}
+function dropSnap() { try { localStorage.removeItem(SNAP_KEY); } catch (e) {} }
+function hasStoredSession() {
+  try { return Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k)); } catch (e) { return true; }
+}
+
+function applyData(d) {
+  const { profiles, contacts, counts, projects, apps, messages, blocks } = d;
+  S.isAdmin = d.isAdmin === true;
+  S.adminIds = new Set(d.admins || []);
   S.blocked = new Set(blocks.map(b => b.blocked_id));
   const visible = id => !S.blocked.has(id); // people I blocked disappear from my screens
   S.profiles = Object.fromEntries(profiles.map(p => [p.id, p]));
@@ -2353,10 +2450,9 @@ async function loadAll() {
   // looking for work, and the names of project owners (those names are on the project cards anyway).
   S.guestPeople = null;
   if (S.isGuest && !S.profiles[S.uid]) {
-    const [gp, go, mc] = await Promise.all([sb.rpc('guest_people'), sb.rpc('guest_owners'), sb.rpc('member_count')]);
-    if (!gp.error) S.guestPeople = gp.data || [];
-    S.memberTotal = !mc.error && typeof mc.data === 'number' ? mc.data : null; // null until the SQL is run
-    if (!go.error) (go.data || []).forEach(o => { if (!S.profiles[o.id]) S.profiles[o.id] = o; });
+    S.guestPeople = d.guestPeople;
+    S.memberTotal = d.memberTotal;
+    (d.guestOwners || []).forEach(o => { if (!S.profiles[o.id]) S.profiles[o.id] = o; });
   }
   S.phones = Object.fromEntries(contacts.map(c => [c.user_id, c.phone]));
   S.counts = Object.fromEntries(counts.map(c => [c.user_id, Number(c.completed)]));
@@ -2383,8 +2479,7 @@ async function loadAll() {
   // before this rule are sent to the edit form once to add it.
   S.hasBirth = true;
   if (S.user) {
-    const b = await sb.from('private_birth').select('user_id').eq('user_id', S.uid).maybeSingle();
-    if (!b.error) S.hasBirth = !!b.data; // on error (table missing) don't lock anyone out
+    S.hasBirth = d.birth !== false;
     if (!S.hasBirth && S.onboardingType !== 'edit') S.onboardingType = 'edit';
   }
 }
@@ -2442,6 +2537,20 @@ function scheduleReload() {
 }
 
 async function boot() {
+  // Instant start (19.11.2026): show something right away instead of waiting for the server.
+  // Coming back = the saved copy of the board. First visit = the opening screen (numbers fill in a moment later).
+  const quick = !/[?&]code=/.test(location.search) && !location.hash.startsWith('#p=');
+  const snap = quick ? readSnap() : null;
+  let shown = null;
+  if (snap) {
+    try {
+      S.uid = snap.uid; S.isGuest = snap.isGuest;
+      applyData(snap.d);
+      S.ready = true; shown = { uid: S.uid, member: !!S.user };
+    } catch (e) { console.error(e); S.ready = false; }
+  } else if (quick && !hasStoredSession()) {
+    S.isGuest = true; S.pendingNumbers = true; S.ready = true; shown = { uid: null, member: false };
+  }
   render();
   try {
     let { data: { session } } = await sb.auth.getSession();
@@ -2455,7 +2564,8 @@ async function boot() {
     S.googleName = (session.user.user_metadata && session.user.user_metadata.full_name) || '';
     // Back from Google: drop the one-time ?code=… from the address bar
     if (location.search.includes('code=')) history.replaceState(null, '', location.pathname + location.hash);
-    await loadAll();
+    saveSnap(await loadAll());
+    S.pendingNumbers = false;
     // Just signed in with Google but no profile yet: go straight to the sign-up form
     if (!S.user && !S.isGuest) S.onboardingType = sessionStorage.getItem('kb_intent') || 'creator';
     sb.channel('kol-bama')
@@ -2479,10 +2589,13 @@ async function boot() {
     }, 30000);
   } catch (e) {
     console.error(e);
+    if (shown && shown.member) { toast('אין חיבור לשרת כרגע. מוצג המידע ששמור במכשיר.'); refreshPushState(); return; }
     S.error = 'לא הצלחנו להתחבר לשרת. כדאי לבדוק את החיבור לאינטרנט ולנסות שוב.';
   }
   S.ready = true;
-  render();
+  if (!shown || S.error || S.uid !== shown.uid && shown.member || !!S.user !== shown.member || S.onboardingType) render();
+  else if (!S.user && !isBrowsingGuest()) updateWelcomeNumbers(); // still on the opening screen: only the numbers change
+  else refreshView();
   refreshPushState();
 }
 
@@ -2506,6 +2619,7 @@ async function logout() {
   // Stop notifications for this account on this device
   try { const sub = pushSupported() && await pushSub(); if (sub) { await sb.rpc('delete_push_subscription', { p_endpoint: sub.endpoint }); await sub.unsubscribe(); } } catch (e) {}
   await sb.auth.signOut().catch(() => {});
+  dropSnap();
   sessionStorage.removeItem('kb_intent');
   location.replace(location.pathname);
 }
@@ -2602,61 +2716,74 @@ function statusScreen() {
   </div>`;
 }
 
-function welcome() {
+// The numbers on the opening screen. Before the server answers (first visit) they show as a quiet dash.
+function statsHtml() {
+  const stat = (n, label) => `<div><b data-count="${n}">${n}</b><span>${label}</span></div>`;
+  if (S.pendingNumbers) {
+    return `<div class="stats-strip stats-pending" data-rise style="--i:4" aria-hidden="true">${['חברים באתר', 'פרויקטים פתוחים', 'אנשי מקצוע'].map(l => `<div><b>–</b><span>${l}</span></div>`).join('')}</div>`;
+  }
   const open = S.projects.filter(isOpen).length;
   const pros = proCount();
   const matches = Object.values(S.counts).reduce((a, b) => a + b, 0);
-  const stat = (n, label) => `<div><b data-count="${n}">${n}</b><span>${label}</span></div>`;
+  return open + pros + matches > 0
+    ? `<div class="stats-strip" data-rise style="--i:4">${S.memberTotal > pros ? stat(S.memberTotal, 'חברים באתר') : ''}${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${matches >= 20 ? stat(matches, 'חיבורים שנוצרו') : ''}</div>`
+    : `<p class="fresh" data-rise style="--i:4">${ic('sparkles')} הלוח חדש. מי שמצטרפים עכשיו מופיעים בו ראשונים.</p>`;
+}
+function updateWelcomeNumbers() {
+  const old = document.querySelector('.hero-main .stats-strip, .hero-main .fresh');
+  if (!old) { refreshView(); return; }
+  old.outerHTML = statsHtml();
+  animateCounts();
+}
+
+// Top of the opening screen (19.11.2026, Guy chose option א out of 3): one button + a small line of links
+function heroPick() {
+  return `<div class="pick">
+      <button class="primary" data-a="start-onboard" data-id="creator" data-rise style="--i:5">
+        <span class="pi">${ic('drama')}</span>
+        <span class="txt"><b>פתיחת חשבון</b></span>
+        <span class="go">${ic('arrow-right')}</span>
+      </button>
+      <button type="button" class="btn ghost peek" data-a="browse" data-rise style="--i:6">${ic('layout-grid')} מי כבר כאן? הצצה בלוח</button>
+      <p class="pick-links" data-rise style="--i:7"><button type="button" class="linklike" data-a="google">כבר רשומים? כניסה</button></p>
+    </div>`;
+}
+
+function welcome() {
   return `<div class="wrap hero">
     <div class="hero-stage" aria-hidden="true">
       <i class="haze z1"></i><i class="haze z2"></i><i class="haze z3"></i><i class="grain"></i>
     </div>
     <div class="hero-top" data-rise style="--i:0">
-      <span class="hero-badge">תיאטרון · קולנוע · פרינג׳ · סטודיו</span>
+      <span></span>
       <button class="btn ghost sm" data-a="theme">${ic(S.theme === 'dark' ? 'sun' : 'moon')} ${S.theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}</button>
     </div>
     <div class="hero-main">
       <h1 data-rise style="--i:1">קול במה</h1>
       <i class="title-line" aria-hidden="true"></i>
       <p class="tagline" data-rise style="--i:2">הקהילה של התיאטרון והקולנוע בישראל</p>
-      <p class="sub" data-rise style="--i:3">מי שמרים פרויקט מוצא צוות, ואנשי מקצוע מוצאים עבודה.</p>
-      ${open + pros + matches > 0
-        ? `<div class="stats-strip" data-rise style="--i:4">${S.memberTotal > pros ? stat(S.memberTotal, 'חברים באתר') : ''}${stat(open, 'פרויקטים פתוחים')}${stat(pros, 'אנשי מקצוע')}${matches >= 20 ? stat(matches, 'חיבורים שנוצרו') : ''}</div>`
-        : `<p class="fresh" data-rise style="--i:4">${ic('sparkles')} הלוח חדש. מי שמצטרפים עכשיו מופיעים בו ראשונים.</p>`}
+      <p class="sub" data-rise style="--i:3">יוצרים מוצאים צוות, ואנשי מקצוע מוצאים עבודה.</p>
+      ${statsHtml()}
     </div>
-    <div class="pick">
-      <button class="primary" data-a="start-onboard" data-id="creator" data-rise style="--i:5">
-        <span class="pi">${ic('drama')}</span>
-        <span class="txt"><b>מרימים פרויקט</b><span>מחפשים שחקנים ואנשי מקצוע להצגה או לסרט</span></span>
-        <span class="go">${ic('arrow-right')}</span>
-      </button>
-      <button data-a="start-onboard" data-id="pro" data-rise style="--i:6">
-        <span class="pi">${ic('lightbulb')}</span>
-        <span class="txt"><b>מחפשים עבודה</b><span>משחק, תאורה, צילום, סאונד, עיצוב או הפקה</span></span>
-        <span class="go">${ic('arrow-right')}</span>
-      </button>
-      <p class="note" style="margin:0;--i:7" data-rise>אפשר גם וגם – הכול מאותו הפרופיל. ההרשמה והכניסה דרך חשבון גוגל, בלי סיסמה חדשה.</p>
-      <div data-rise style="--i:7">${googleBtn('כבר רשום/ה? כניסה עם גוגל', 'btn ghost')}</div>
-      <div data-rise style="--i:8"><button type="button" class="btn ghost" data-a="browse">${ic('layout-grid')} רוצים להציץ בלוח לפני שמצטרפים?</button></div>
-    </div>
-    ${footLinks()}
+    ${heroPick()}
     ${tickerHtml()}
   </div>
   <section class="wrap how" aria-labelledby="how-title">
     <h2 id="how-title" class="how-title">איך זה עובד</h2>
     <div class="steps-wrap">
     <i class="rail" aria-hidden="true"><i class="rail-fill"></i></i>
-    <ol class="steps">
+    <!-- 19.11.2026: back to the general text (Guy: "it covers everything"), option א: an icon per step in a gold circle -->
+    <ol class="steps steps-ico">
       <li class="step">
-        <span class="step-n">1</span>
+        <span class="step-n">${ic('user-round')}<i class="step-badge">1</i></span>
         <div><h3>מצטרפים עם גוגל</h3><p>פרופיל אחד לכל דבר: אפשר לפרסם פרויקט וגם להגיש מועמדות. בלי סיסמה חדשה.</p></div>
       </li>
       <li class="step">
-        <span class="step-n">2</span>
+        <span class="step-n">${ic('send')}<i class="step-badge">2</i></span>
         <div><h3>מפרסמים או מגישים</h3><p>מעלים הצגה או סרט ומסמנים את מי מחפשים. או מגישים מועמדות לפרויקט שמתאים לך.</p></div>
       </li>
       <li class="step">
-        <span class="step-n">3</span>
+        <span class="step-n">${ic('message-circle')}<i class="step-badge">3</i></span>
         <div><h3>נפגשים ויוצרים</h3><p>בעל הפרויקט מאשר, ורק אז מספר הטלפון נחשף. משם ממשיכים בוואטסאפ.</p></div>
       </li>
     </ol>
@@ -2664,22 +2791,25 @@ function welcome() {
     <div class="how-cta">
       <h2 class="how-title">מוכנים להרים את ההפקה הבאה?</h2>
       <div class="row">
-        <button class="btn" data-a="start-onboard" data-id="creator">${ic('drama')} מצטרפים עכשיו</button>
+        <button class="btn" data-a="start-onboard" data-id="creator">${ic('drama')} פתיחת חשבון</button>
         <button type="button" class="btn ghost" data-a="browse">${ic('layout-grid')} הצצה בלוח</button>
       </div>
     </div>
-  </section>`;
+  </section>
+  <div class="wrap welcome-foot">${footLinks(true, false)}</div>`;
 }
 
 // Where the Supabase project physically lives (eu-central-1 = Frankfurt). Change if the project moves.
 const DATA_LOCATION = 'גרמניה (פרנקפורט), באיחוד האירופי';
 // Requests reach the admin through the in-site contact form (table contact_requests), never a public email.
 
-// Small row of links at the bottom of every screen
-const footLinks = () => `<p class="site-idea"><span>${ic('lightbulb')} יש לכם הצעה לשיפור?</span><button type="button" class="linklike" data-a="contact" data-id="idea">כתבו לנו כאן</button></p>
+// Small row of links at the bottom of every screen. Terms only on the opening screen and the profile tab
+// (Guy's choice 19.11.2026: they are accepted at sign-up); the accessibility statement stays everywhere.
+// The "suggestion" line is not on the opening screen (Guy, 19.11.2026)
+const footLinks = (terms = true, idea = true) => `${idea ? `<p class="site-idea"><span>${ic('lightbulb')} יש לכם הצעה לשיפור?</span><button type="button" class="linklike" data-a="contact" data-id="idea">כתבו לנו כאן</button></p>` : ''}
 <p class="note site-foot">
-  <button type="button" class="linklike" data-a="terms">תנאי שימוש ופרטיות</button>
-  <span aria-hidden="true">·</span>
+  ${terms ? `<button type="button" class="linklike" data-a="terms">תנאי שימוש ופרטיות</button>
+  <span aria-hidden="true">·</span>` : ''}
   <button type="button" class="linklike" data-a="access">הצהרת נגישות</button>
   <span aria-hidden="true">·</span>
   <button type="button" class="linklike" data-a="contact" data-id="other">יצירת קשר</button>
@@ -3006,7 +3136,7 @@ function mainView() {
     </div>` : ''}
 
     <div class="list list-${esc(S.tab)}" id="list">${renderTabContent()}</div>
-    ${footLinks()}
+    ${footLinks(S.tab === 'profile')}
   </div>`;
 }
 
