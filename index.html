@@ -3159,7 +3159,7 @@ function mainView() {
     </div>` : ''}
 
     <div class="list list-${esc(S.tab)}" id="list">${renderTabContent()}</div>
-    ${footLinks(S.tab === 'profile')}
+    ${footLinks(S.tab === 'profile', !guest)}
   </div>`;
 }
 
@@ -3746,6 +3746,13 @@ function modalView() {
         <button class="btn" data-a="open" data-id="proj">${ic('plus')} פרסום פרויקט</button>
         <button class="btn ghost" data-a="close">אחר כך</button>
       </div>`;
+  } else if (m === 'post-ask') {
+    h = `<h3>${ic('drama')} ${esc(POST_ASK.title)}</h3>
+      <p>${esc(POST_ASK.body)}</p>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" data-a="open" data-id="proj">${ic('plus')} להעלות פרויקט</button>
+        <button class="btn ghost" data-a="close">לא עכשיו</button>
+      </div>`;
   } else if (m === 'push-offer') {
     h = S.pushOfferKind === 'entry'
       ? `<h3>${ic('bell')} לא לפספס פרויקט חדש</h3>
@@ -3794,7 +3801,33 @@ function markNudged() {
 function maybePhotoNudge() {
   if (!S.user || S.user.photo || S.modal || S.onboardingType || nudgeSeen()) return;
   markNudged();
+  S.nudgeShownNow = true;
   S.modal = 'photo-nudge';
+}
+
+// One-time window for existing members who never posted a project: "what project do you dream of?"
+// Once per account on this device. Not in the same visit as another window, not for people who just signed up.
+const POST_ASK = {
+  title: 'איזה פרויקט את/ה חולם/ת לעשות?',
+  body: 'תעלו אותו לקול במה, ואנשים מתאימים ימצאו אתכם.'
+};
+const POST_ASK_KEY = 'kb_post_ask';
+function postAskSeen() {
+  if (S.postAsked) return true;
+  try { return JSON.parse(localStorage.getItem(POST_ASK_KEY) || '[]').includes(S.uid); } catch (e) { return false; }
+}
+function markPostAsked() {
+  S.postAsked = true;
+  try {
+    const seen = JSON.parse(localStorage.getItem(POST_ASK_KEY) || '[]');
+    if (!seen.includes(S.uid)) localStorage.setItem(POST_ASK_KEY, JSON.stringify([...seen, S.uid].slice(-20)));
+  } catch (e) {}
+}
+function maybePostAsk() {
+  if (!S.user || S.modal || S.onboardingType || S.justJoined || S.nudgeShownNow || postAskSeen()) return;
+  if ((S.projects || []).some(isMine)) { markPostAsked(); return; }
+  markPostAsked();
+  S.modal = 'post-ask';
 }
 
 // Offer to turn on phone notifications, once per account on this device, right after a first
@@ -3899,6 +3932,7 @@ function render() {
     // Preview link (?intro=name / ?intro=beam) also plays the intro for signed-in people, once
     if (/[?&]intro=/.test(location.search) && !S.introPreviewed) { S.introPreviewed = true; runIntro(() => {}); }
     maybePhotoNudge();
+    maybePostAsk();
     maybePushOffer();
     schedulePushEntryOffer();
     maybeInstallOffer(S.justJoined ? 1500 : 8000);
@@ -4476,6 +4510,7 @@ document.addEventListener('submit', async e => {
     clearObDraft();
     S.obStep = 1;
     if (!wasEdit) markNudged(); // just saw the photo option in the form, no need for the "new: photos" window
+    if (!wasEdit) markPostAsked(); // gets the "post-nudge" window right now instead
     if (!wasEdit) S.justJoined = true; // offer "add to home screen" right away
     await loadAll();
     S.onboardingType = null;
