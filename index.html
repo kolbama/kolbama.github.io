@@ -1288,7 +1288,6 @@ const FORMATS = {
 const FRAMES = [
   'בלי תשלום',
   'החזר הוצאות ונסיעות',
-  'חלוקת קופה (אחרי הוצאות)',
   'תשלום חלקי / סמלי',
   'תשלום מלא'
 ];
@@ -3594,7 +3593,7 @@ function modalView() {
         <div class="role-picker" id="role-picker">${pills(MEDIA_ROLES[medium], sel)}</div>
 
         <label>מסגרת הפקה ותקציב *</label>
-        <select name="frame">${opts(FRAMES, editing ? editing.frame : undefined)}</select>
+        <select name="frame">${opts(editing && editing.frame && !FRAMES.includes(editing.frame) ? [...FRAMES, editing.frame] : FRAMES, editing ? editing.frame : undefined)}</select>
         ${nav(2)}
         </div>
 
