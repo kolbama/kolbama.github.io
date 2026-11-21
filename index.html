@@ -2587,6 +2587,9 @@ async function boot() {
     S.isGuest = true; S.pendingNumbers = true; S.ready = true; shown = { uid: null, member: false };
   }
   render();
+  // Back from Google with an error (e.g. this Google account already belongs to another profile)
+  const authErr = new URLSearchParams(location.search + '&' + location.hash.slice(1)).get('error_code');
+  if (authErr) history.replaceState(null, '', location.pathname);
   try {
     let { data: { session } } = await sb.auth.getSession();
     if (!session) {
@@ -2594,6 +2597,9 @@ async function boot() {
       if (error) throw error;
       session = data.session;
     }
+    // The saved copy belongs to someone else (e.g. the Google sign-in expired and this is now a new guest):
+    // forget it, so we don't show that profile as if it were this session's.
+    if (shown && shown.uid && shown.uid !== session.user.id) { dropSnap(); S.user = null; }
     S.uid = session.user.id;
     S.isGuest = !!session.user.is_anonymous;
     S.googleName = (session.user.user_metadata && session.user.user_metadata.full_name) || '';
@@ -2601,6 +2607,16 @@ async function boot() {
     if (location.search.includes('code=')) history.replaceState(null, '', location.pathname + location.hash);
     saveSnap(await loadAll());
     S.pendingNumbers = false;
+    if (authErr === 'identity_already_exists') {
+      // A guest without a profile: just sign in to the existing Google profile.
+      if (S.isGuest && !S.user) {
+        await sb.auth.signOut().catch(() => {});
+        dropSnap();
+        await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+        return;
+      }
+      toast('חשבון הגוגל הזה כבר מחובר לפרופיל אחר באתר');
+    } else if (authErr) toast('ההתחברות עם גוגל נכשלה. אפשר לנסות שוב.');
     // Just signed in with Google but no profile yet: go straight to the sign-up form
     if (!S.user && !S.isGuest) S.onboardingType = sessionStorage.getItem('kb_intent') || 'creator';
     sb.channel('kol-bama')
@@ -2624,7 +2640,7 @@ async function boot() {
     }, 30000);
   } catch (e) {
     console.error(e);
-    if (shown && shown.member) { toast('אין חיבור לשרת כרגע. מוצג המידע ששמור במכשיר.'); refreshPushState(); return; }
+    if (shown && shown.member && S.uid === shown.uid) { toast('אין חיבור לשרת כרגע. מוצג המידע ששמור במכשיר.'); refreshPushState(); return; }
     S.error = 'לא הצלחנו להתחבר לשרת. כדאי לבדוק את החיבור לאינטרנט ולנסות שוב.';
   }
   S.ready = true;
