@@ -3203,10 +3203,10 @@ function projectCard(p) {
       <div class="actions">
         ${!mine ? (hasApplied(p.id)
           ? `<span class="chip verified">${ic('check')} הגשת מועמדות</span>`
-          : open ? `<button class="btn" data-a="apply-open" data-id="${esc(p.id)}">הגשת מועמדות</button>` : '') : ''}
-        ${!mine ? `<button class="btn ghost sm" data-a="chat" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}">${ic('message-circle')} שאלה ליוצר/ת</button>` : ''}
-        ${open ? `<button class="btn ghost sm" data-a="share-proj" data-id="${esc(p.id)}">${ic('share-2')} שיתוף</button>` : ''}
-        ${!mine ? `<button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}" aria-label="דיווח על המודעה">${ic('flag')}</button>` : ''}
+          : open ? `<button class="btn" data-a="apply-open" data-id="${esc(p.id)}" aria-label="הגשת מועמדות – ${esc(p.title)}">הגשת מועמדות</button>` : '') : ''}
+        ${!mine ? `<button class="btn ghost sm" data-a="chat" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}" aria-label="שאלה ליוצר/ת – ${esc(p.title)}">${ic('message-circle')} שאלה ליוצר/ת</button>` : ''}
+        ${open ? `<button class="btn ghost sm" data-a="share-proj" data-id="${esc(p.id)}" aria-label="שיתוף – ${esc(p.title)}">${ic('share-2')} שיתוף</button>` : ''}
+        ${!mine ? `<button class="btn ghost sm" data-a="report" data-other="${esc(p.uid)}" data-proj="${esc(p.id)}" aria-label="דיווח על המודעה – ${esc(p.title)}">${ic('flag')}</button>` : ''}
         ${mine ? `
           ${p.status === 'filled'
             ? `<button class="btn ghost sm" data-a="toggle-filled" data-id="${esc(p.id)}">${ic('rotate-ccw')} פתיחה מחדש</button>`
@@ -3677,14 +3677,14 @@ function modalView() {
         ${ms.length ? ms.map(x => `<div class="m ${x.sender_id === S.uid ? 'me' : ''}">
             <div class="m-meta">${esc(nameOf(x.sender_id))} · ${esc(timeLabel(x.created_at))}${x.sender_id === S.uid
               ? (x.read_at
-                ? ` <span class="tick read" aria-label="נקרא">✓✓</span>`
-                : ` <span class="tick" aria-label="נשלח">✓</span>`)
+                ? ` <span class="tick read" role="img" aria-label="נקרא">✓✓</span>`
+                : ` <span class="tick" role="img" aria-label="נשלח">✓</span>`)
               : ''}</div>
             <div>${esc(x.body)}</div>
           </div>`).join('') : '<div class="note" style="text-align:center;margin:auto">עדיין אין הודעות בשיחה זו. רק שניכם רואים אותה.</div>'}
       </div>
       <form data-f="chat" class="row" style="flex-wrap:nowrap">
-        <input name="msg" autocomplete="off" maxlength="1000" placeholder="כתיבת הודעה…">
+        <input name="msg" autocomplete="off" maxlength="1000" aria-label="כתיבת הודעה" placeholder="כתיבת הודעה…">
         <button class="btn">שליחה</button>
       </form>`;
   } else if (m === 'report') {
